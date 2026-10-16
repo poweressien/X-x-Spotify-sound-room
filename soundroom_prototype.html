@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SoundRoom — X × Spotify Premium</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#090909;color:#fff;overflow-x:hidden;}
+/* Tailwind utility fallbacks (in case CDN is slow) */
+.p-5{padding:1.25rem!important;}.p-6{padding:1.5rem!important;}.p-4{padding:1rem!important;}
+
+/* ── Brand ── */
+.sp{color:#1DB954;} .bg-sp{background:#1DB954;}
+.glow{box-shadow:0 0 28px rgba(29,185,84,.35);}
+.glow-sm{box-shadow:0 0 14px rgba(29,185,84,.22);}
+.glow-gold{box-shadow:0 0 18px rgba(255,215,0,.3);}
+
+/* ── Keyframes ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(29,185,84,.5)}50%{box-shadow:0 0 0 10px rgba(29,185,84,0)}}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes wave{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+@keyframes eqB{from{height:4px}to{height:18px}}
+@keyframes typingB{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-150px) scale(1.5)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(110%)}to{opacity:1;transform:translateX(0)}}
+@keyframes countUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes tourSpot{0%,100%{box-shadow:0 0 0 4px rgba(29,185,84,.6),0 0 0 9px rgba(29,185,84,.2)}50%{box-shadow:0 0 0 6px rgba(29,185,84,.85),0 0 0 14px rgba(29,185,84,.08)}}
+@keyframes stepBounce{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes rankPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes hotFlame{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.2) rotate(3deg)}}
+@keyframes barGrow{from{height:0}to{height:var(--h)}}
+@keyframes requestPing{0%{box-shadow:0 0 0 0 rgba(255,165,0,.5)}70%{box-shadow:0 0 0 12px rgba(255,165,0,0)}100%{box-shadow:0 0 0 0 rgba(255,165,0,0)}}
+@keyframes floatNote{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-18px) rotate(5deg)}}
+
+/* ── Classes ── */
+.vinyl{animation:spin 8s linear infinite;}.vinyl.paused{animation-play-state:paused;}
+.eq-bar{animation:eqB .8s ease-in-out infinite alternate;display:inline-block;background:#1DB954;border-radius:2px;width:4px;}
+.eq-bar:nth-child(1){animation-duration:.6s}.eq-bar:nth-child(2){animation-duration:.8s;animation-delay:.1s}
+.eq-bar:nth-child(3){animation-duration:.7s;animation-delay:.2s}.eq-bar:nth-child(4){animation-duration:.9s;animation-delay:.05s}
+.eq-bar:nth-child(5){animation-duration:.65s;animation-delay:.15s}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#ff4040;animation:livePulse 1s infinite;}
+.typing-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#1DB954;animation:typingB 1.4s infinite;margin:0 1px;}
+.typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+.rx-float{position:fixed;pointer-events:none;font-size:2rem;animation:floatUp 2.2s ease-out forwards;z-index:1000;}
+.hot-flame{animation:hotFlame 1s ease-in-out infinite;}
+.rank-badge{animation:rankPop .5s cubic-bezier(.34,1.56,.64,1) both;}
+.activity-bar{border-radius:2px 2px 0 0;transition:height .6s ease;background:linear-gradient(180deg,#1DB954,#0d6b2b);}
+.shimmer{background:linear-gradient(90deg,#1a1a1a 25%,#222 50%,#1a1a1a 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;}
+.request-ping{animation:requestPing 1.5s ease-out infinite;}
+.speaker-av.speaking{box-shadow:0 0 0 3px #1DB954;animation:pulse 1.5s infinite;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0d0d0d}::-webkit-scrollbar-thumb{background:#1DB954;border-radius:4px}
+
+/* ── Nav ── */
+.nav-tab{transition:all .2s;color:#666;font-size:.78rem;padding:6px 10px;border-radius:8px;cursor:pointer;border:none;background:none;}
+.nav-tab.active{background:rgba(29,185,84,.12);color:#1DB954;border-bottom:2px solid #1DB954;}
+.nav-tab:hover:not(.active){background:rgba(255,255,255,.05);color:#ccc;}
+
+/* ── Pill tabs ── */
+.pill-tab{padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid #2a2a2a;background:#141414;color:#666;}
+.pill-tab.active{background:#1DB954;color:#000;border-color:#1DB954;}
+.pill-tab:hover:not(.active){border-color:#444;color:#ccc;}
+
+/* ── Pages ── */
+.page{display:none;}.page.active{display:block;}
+
+/* ── Cards ── */
+.card{background:#111;border:1px solid #1e1e1e;border-radius:14px;}
+.card-hover{transition:border-color .2s,transform .15s,box-shadow .2s;}
+.card-hover:hover{border-color:rgba(29,185,84,.5)!important;transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.5);}
+
+/* ── Room card ── */
+.room-card{background:#111;border:1px solid #1e1e1e;border-radius:14px;overflow:hidden;transition:all .2s;cursor:pointer;}
+.room-card:hover{border-color:rgba(29,185,84,.45);transform:translateY(-2px);box-shadow:0 10px 32px rgba(0,0,0,.6);}
+.room-card.private-card{border-color:#3a2800;}
+.room-card.private-card:hover{border-color:rgba(255,165,0,.5);}
+
+/* ── Top Room rank ── */
+.rank-1{background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;}
+.rank-2{background:linear-gradient(135deg,#C0C0C0,#999);color:#000;}
+.rank-3{background:linear-gradient(135deg,#CD7F32,#8B4513);color:#fff;}
+
+/* ── Side tabs ── */
+.side-tab{color:#555;transition:all .2s;font-size:.73rem;cursor:pointer;border:none;background:none;}
+.side-tab.active{color:#1DB954;border-bottom:2px solid #1DB954;}
+
+/* ── Input ── */
+input,textarea,select{background:#111;border:1px solid #222;color:#fff;border-radius:10px;outline:none;transition:border-color .2s;}
+input:focus,textarea:focus,select:focus{border-color:#1DB954;}
+input::placeholder,textarea::placeholder{color:#444;}
+select option{background:#111;color:#fff;}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;display:flex;align-items:center;justify-content:center;}
+.modal-box{background:#111;border:1px solid #222;border-radius:20px;max-width:500px;width:92%;max-height:90vh;overflow-y:auto;}
+
+/* ── Toast ── */
+.toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:340px;}
+.toast-item{animation:toastIn .4s ease-out;}
+
+/* ── Queue ── */
+.queue-item{transition:background .15s;}
+.queue-item:hover{background:rgba(255,255,255,.04);}
+.queue-item.playing{background:rgba(29,185,84,.08);border-left:3px solid #1DB954;}
+
+/* ── Host badge ── */
+.host-badge{font-size:.55rem;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;padding:1px 5px;border-radius:99px;font-weight:700;}
+
+/* ── Tour ── */
+#tourOverlay{position:fixed;inset:0;z-index:8000;pointer-events:none;}
+#tourDimmer{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:8001;}
+#tourCard{position:fixed;z-index:8010;max-width:310px;width:88%;background:#0f0f0f;border:1.5px solid #1DB954;border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.9);pointer-events:all;}
+#tourSpot{position:fixed;z-index:8005;border-radius:12px;border:2px solid #1DB954;animation:tourSpot 2s ease-in-out infinite;pointer-events:none;display:none;}
+.tdot{width:7px;height:7px;border-radius:50%;transition:all .25s;}
+
+/* ── OAuth step ── */
+.oa-step.done .step-icon{background:rgba(29,185,84,.15)!important;border-color:#1DB954!important;}
+.oa-step.active-oa .step-icon{animation:stepBounce 1.2s ease-in-out infinite;}
+
+/* ── Activity sparkline ── */
+.spark{display:flex;align-items:flex-end;gap:2px;height:24px;}
+.spark-bar{width:5px;border-radius:2px 2px 0 0;background:#1DB954;opacity:.7;transition:height .4s ease;}
+
+/* ── Category card ── */
+.cat-card{background:#111;border:1px solid #1e1e1e;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s;}
+.cat-card:hover{border-color:rgba(29,185,84,.4);transform:translateY(-2px);}
+
+/* ── Request join badge ── */
+.req-pending{background:rgba(255,165,0,.12);border:1px solid rgba(255,165,0,.4);color:#f39c12;}
+.req-approved{background:rgba(29,185,84,.12);border:1px solid rgba(29,185,84,.4);color:#1DB954;}
+.req-denied{background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.4);color:#ff4040;}
+
+/* ── Create Room pill selector ── */
+.privacy-opt{border:1px solid #2a2a2a;border-radius:10px;padding:10px;cursor:pointer;transition:all .2s;background:#0d0d0d;}
+.privacy-opt.selected{border-color:#1DB954;background:rgba(29,185,84,.08);}
+.privacy-opt:hover:not(.selected){border-color:#444;}
+</style>
+</head>
+<body>
+
+<!-- ══ TOAST ══ -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ══════════ TOUR OVERLAY ══════════ -->
+<div id="tourOverlay" style="display:none;">
+  <div id="tourDimmer"></div>
+  <div id="tourSpot"></div>
+  <div id="tourCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div id="tourNum" style="width:26px;height:26px;background:linear-gradient(135deg,#1DB954,#0a8030);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#000;"></div>
+        <span id="tourLabel" style="font-size:.68rem;color:#555;"></span>
+      </div>
+      <button onclick="endTour()" style="color:#333;font-size:.95rem;background:none;border:none;cursor:pointer;">✕</button>
+    </div>
+    <h3 id="tourTitle" style="font-weight:700;font-size:.95rem;margin-bottom:7px;"></h3>
+    <p id="tourDesc" style="font-size:.8rem;color:#999;line-height:1.55;margin-bottom:14px;"></p>
+    <div style="display:flex;gap:4px;margin-bottom:14px;" id="tourDots"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="tourBack()" id="tourBk" style="flex:1;padding:8px;border-radius:10px;font-size:.8rem;font-weight:600;background:#1a1a1a;border:1px solid #2a2a2a;color:#666;cursor:pointer;">← Back</button>
+      <button onclick="tourNext()" id="tourNx" style="flex:1;padding:8px;border-radius:10px;font-size:.8rem;font-weight:600;background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;border:none;cursor:pointer;">Next →</button>
+    </div>
+    <button onclick="endTour()" style="font-size:.7rem;color:#2a2a2a;display:block;width:100%;text-align:center;margin-top:8px;background:none;border:none;cursor:pointer;">Skip tour</button>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- Create Room -->
+<div id="createRoomModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box p-6" style="max-width:460px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-weight:700;font-size:1.1rem;">🏠 Create a SoundRoom</h3>
+      <button onclick="closeCreateRoom()" style="color:#555;background:none;border:none;cursor:pointer;font-size:1rem;">✕</button>
+    </div>
+    <!-- Room Name -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:.78rem;color:#888;display:block;margin-bottom:6px;">Room Name</label>
+      <input type="text" id="newRoomName" placeholder="e.g. Friday Night Vibes 🔥" style="width:100%;padding:10px 12px;font-size:.88rem;border-radius:10px;"/>
+    </div>
+    <!-- Genre -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:.78rem;color:#888;display:block;margin-bottom:6px;">Genre / Vibe</label>
+      <select id="newRoomGenre" style="width:100%;padding:10px 12px;font-size:.88rem;border-radius:10px;">
+        <option value="afrobeats">🌍 Afrobeats</option>
+        <option value="hiphop">🎤 Hip-Hop</option>
+        <option value="rnb">🎹 R&B</option>
+        <option value="pop">✨ Pop</option>
+        <option value="lofi">🍃 Lo-Fi</option>
+        <option value="jazz">🎷 Jazz</option>
+        <option value="electronic">⚡ Electronic</option>
+        <option value="latin">💃 Latin</option>
+      </select>
+    </div>
+    <!-- Privacy -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:.78rem;color:#888;display:block;margin-bottom:8px;">Privacy</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div class="privacy-opt selected" onclick="selectPrivacy('public',this)">
+          <div style="font-size:1.1rem;margin-bottom:4px;">🌍</div>
+          <div style="font-size:.75rem;font-weight:700;">Public</div>
+          <div style="font-size:.65rem;color:#666;margin-top:2px;">Anyone can join</div>
+        </div>
+        <div class="privacy-opt" onclick="selectPrivacy('request',this)">
+          <div style="font-size:1.1rem;margin-bottom:4px;">🔑</div>
+          <div style="font-size:.75rem;font-weight:700;">Request</div>
+          <div style="font-size:.65rem;color:#666;margin-top:2px;">Host approves</div>
+        </div>
+        <div class="privacy-opt" onclick="selectPrivacy('private',this)">
+          <div style="font-size:1.1rem;margin-bottom:4px;">🔒</div>
+          <div style="font-size:.75rem;font-weight:700;">Private</div>
+          <div style="font-size:.65rem;color:#666;margin-top:2px;">Invite only</div>
+        </div>
+      </div>
+    </div>
+    <!-- X Space -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;background:#0d0d0d;border:1px solid #1a1a1a;margin-bottom:16px;">
+      <div>
+        <div style="font-size:.85rem;font-weight:600;">🎙️ Start X Space with room</div>
+        <div style="font-size:.72rem;color:#666;margin-top:2px;">Members can talk live</div>
+      </div>
+      <div onclick="toggleSwitch(this)" style="width:40px;height:22px;border-radius:99px;background:#1DB954;cursor:pointer;position:relative;transition:background .2s;" id="spaceSwitch">
+        <div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:3px;right:3px;transition:right .2s;"></div>
+      </div>
+    </div>
+    <!-- Max members -->
+    <div style="margin-bottom:16px;">
+      <label style="font-size:.78rem;color:#888;display:block;margin-bottom:6px;">Max Listeners: <span id="maxVal">50</span></label>
+      <input type="range" min="5" max="200" value="50" style="width:100%;accent-color:#1DB954;" oninput="document.getElementById('maxVal').textContent=this.value"/>
+    </div>
+    <button onclick="doCreateRoom()" style="width:100%;padding:12px;border-radius:12px;font-weight:700;font-size:.9rem;color:#000;background:linear-gradient(135deg,#1DB954,#1ed760);cursor:pointer;" class="glow">🚀 Launch Room</button>
+  </div>
+</div>
+
+<!-- Request to Join -->
+<div id="requestJoinModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box p-6" style="max-width:400px;">
+    <div style="text-align:center;padding:12px 0 16px;">
+      <div id="rjIcon" style="font-size:2.5rem;margin-bottom:8px;">🔑</div>
+      <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:6px;" id="rjTitle">Request to Join</h3>
+      <p style="font-size:.82rem;color:#888;margin-bottom:16px;" id="rjDesc">This room requires host approval. Send a request and you'll be notified when accepted.</p>
+    </div>
+    <div style="background:#0d0d0d;border:1px solid #1a1a1a;border-radius:12px;padding:12px;margin-bottom:14px;" id="rjRoomInfo"></div>
+    <textarea id="rjNote" placeholder="Add a note to the host (optional)..." rows="3" style="width:100%;padding:10px;font-size:.82rem;border-radius:10px;margin-bottom:12px;resize:none;"></textarea>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeRequestJoin()" style="flex:1;padding:10px;border-radius:10px;font-size:.85rem;font-weight:600;background:#1a1a1a;border:1px solid #2a2a2a;color:#888;cursor:pointer;">Cancel</button>
+      <button onclick="submitRequest()" id="rjSubmitBtn" style="flex:1;padding:10px;border-radius:10px;font-size:.85rem;font-weight:600;background:linear-gradient(135deg,#f39c12,#e67e22);color:#000;border:none;cursor:pointer;">Send Request 🔑</button>
+    </div>
+    <div id="rjPendingState" style="display:none;text-align:center;padding:14px 0;">
+      <div style="font-size:1.8rem;margin-bottom:8px;" class="request-ping">⏳</div>
+      <div style="font-weight:700;color:#f39c12;margin-bottom:4px;">Request Sent!</div>
+      <div style="font-size:.8rem;color:#666;">Waiting for host approval…</div>
+      <div style="margin-top:12px;">
+        <button onclick="simulateApproval()" style="font-size:.75rem;padding:5px 14px;border-radius:99px;background:rgba(29,185,84,.12);border:1px solid rgba(29,185,84,.3);color:#1DB954;cursor:pointer;">Simulate: Host Approves →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Song -->
+<div id="addSongModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box p-5">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3 style="font-weight:700;">🎵 Add a Song</h3>
+      <button onclick="closeAddSong()" style="color:#555;background:none;border:none;cursor:pointer;font-size:1rem;">✕</button>
+    </div>
+    <div style="position:relative;margin-bottom:10px;">
+      <input type="text" id="songSearch" placeholder="Search Spotify catalog..." style="width:100%;padding:9px 12px 9px 34px;font-size:.85rem;border-radius:10px;" oninput="searchSongs(this.value)"/>
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#1DB954;">🔍</span>
+    </div>
+    <div id="songResults" style="max-height:250px;overflow-y:auto;"></div>
+    <p style="font-size:.7rem;color:#333;margin-top:8px;">Searching Spotify · song is voted on by the room</p>
+  </div>
+</div>
+
+<!-- Invite -->
+<div id="inviteModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box p-5">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3 style="font-weight:700;">👥 Invite Friends</h3>
+      <button onclick="closeInvite()" style="color:#555;background:none;border:none;cursor:pointer;font-size:1rem;">✕</button>
+    </div>
+    <div style="background:#0d0d0d;border:1px solid #1a1a1a;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+      <div style="font-size:.7rem;color:#444;margin-bottom:4px;">Room invite link</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:.78rem;color:#1DB954;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">https://x.com/soundroom/friday-vibes-2026</span>
+        <button onclick="showToast('🔗 Link copied!','success')" style="font-size:.72rem;padding:3px 10px;border-radius:7px;background:#1DB954;color:#000;font-weight:600;cursor:pointer;border:none;">Copy</button>
+      </div>
+    </div>
+    <div style="font-size:.78rem;font-weight:600;margin-bottom:8px;">Your X Followers</div>
+    <div id="inviteList" style="max-height:200px;overflow-y:auto;"></div>
+    <button onclick="showToast('📨 Invites sent via X DM!','success');closeInvite();" style="margin-top:12px;width:100%;padding:10px;border-radius:12px;font-weight:600;font-size:.82rem;color:#000;background:linear-gradient(135deg,#1DB954,#1ed760);cursor:pointer;border:none;">Send via X DM</button>
+  </div>
+</div>
+
+<!-- ══════════ NAVIGATION ══════════ -->
+<header id="mainNav" style="background:#060606;border-bottom:1px solid #141414;position:sticky;top:0;z-index:300;">
+  <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;">
+    <!-- Logo -->
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-right:4px;">
+      <div style="background:#fff;border-radius:7px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </div>
+      <span style="color:#1DB954;font-size:.95rem;font-weight:700;">×</span>
+      <div style="background:#1DB954;border-radius:7px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+      </div>
+      <span style="font-weight:800;font-size:.95rem;">SoundRoom</span>
+      <span style="background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;font-size:.52rem;font-weight:700;padding:2px 5px;border-radius:99px;">PREMIUM</span>
+    </div>
+    <!-- Tabs -->
+    <nav style="display:flex;align-items:center;gap:2px;flex:1;overflow-x:auto;">
+      <button onclick="showPage('connect')" class="nav-tab" id="tab-connect">🔗 Connect</button>
+      <button onclick="showPage('landing')" class="nav-tab active" id="tab-landing">🏠 Home</button>
+      <button onclick="showPage('global')" class="nav-tab" id="tab-global" style="position:relative;">🌍 Global <span style="position:absolute;top:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#ff4040;animation:livePulse 1s infinite;"></span></button>
+      <button onclick="showPage('room')" class="nav-tab" id="tab-room">🎵 My Room</button>
+      <button onclick="showPage('apiarch')" class="nav-tab" id="tab-apiarch">⚙️ API</button>
+      <button onclick="showPage('proposal')" class="nav-tab" id="tab-proposal">📋 Proposal</button>
+    </nav>
+    <!-- Right -->
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <button onclick="openCreateRoom()" id="createRoomBtn" style="font-size:.72rem;padding:5px 12px;border-radius:99px;background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;font-weight:700;cursor:pointer;border:none;white-space:nowrap;">+ Create Room</button>
+      <button onclick="startTour()" style="font-size:.72rem;padding:5px 10px;border-radius:8px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.25);color:#1DB954;cursor:pointer;white-space:nowrap;">🧭 Tour</button>
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#1DB954,#0a8030);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0;">A</div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════
+     PAGE: CONNECT
+═══════════════════════════════════ -->
+<div id="page-connect" class="page">
+  <div style="max-width:600px;margin:0 auto;padding:36px 20px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;background:rgba(29,185,84,.08);border:1px solid rgba(29,185,84,.2);margin-bottom:12px;">
+        <div class="live-dot" style="width:6px;height:6px;"></div>
+        <span style="color:#1DB954;font-size:.72rem;font-weight:600;">Step 1 — Account Connection</span>
+      </div>
+      <h1 style="font-size:1.7rem;font-weight:800;margin-bottom:6px;">Connect Your Accounts</h1>
+      <p style="color:#666;font-size:.85rem;max-width:420px;margin:0 auto;">SoundRoom uses OAuth 2.0 to securely bridge your X Premium and Spotify Premium accounts. No passwords stored.</p>
+    </div>
+    <!-- Steps -->
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
+      <!-- X -->
+      <div class="card oa-step active-oa" id="oa-x" style="padding:16px;">
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+          <div class="step-icon" style="width:46px;height:46px;border-radius:12px;background:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="#000"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+              <div><div style="font-weight:700;font-size:.92rem;">1. Authorize with X</div><div style="color:#666;font-size:.75rem;">Grants access to your profile, followers &amp; notifications</div></div>
+              <button onclick="connectX(this)" id="btnX" style="font-size:.78rem;padding:6px 14px;border-radius:10px;background:#fff;color:#000;font-weight:700;cursor:pointer;border:none;flex-shrink:0;">Connect X →</button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;">
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">tweet.read</span>
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">users.read</span>
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">dm.write</span>
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">spaces.read</span>
+            </div>
+            <div id="xOK" style="display:none;margin-top:8px;color:#1DB954;font-size:.82rem;">✓ Connected as @alexmusic &nbsp;<span style="background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);font-size:.65rem;padding:2px 6px;border-radius:99px;">X Premium ✓</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:8px;"><div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#1DB954);"></div><span style="font-size:.68rem;color:#1DB954;">OAuth Token Exchange</span><div style="height:1px;flex:1;background:linear-gradient(90deg,#1DB954,transparent);"></div></div>
+      <!-- Spotify -->
+      <div class="card oa-step" id="oa-sp" style="padding:16px;opacity:.35;pointer-events:none;">
+        <div style="display:flex;align-items:flex-start;gap:14px;">
+          <div class="step-icon" style="width:46px;height:46px;border-radius:12px;background:#1DB954;border:2px solid #1DB954;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+              <div><div style="font-weight:700;font-size:.92rem;">2. Authorize with Spotify</div><div style="color:#666;font-size:.75rem;">Grants access to your Spotify Premium player and library</div></div>
+              <button onclick="connectSp(this)" id="btnSp" style="font-size:.78rem;padding:6px 14px;border-radius:10px;background:#1DB954;color:#000;font-weight:700;cursor:pointer;border:none;flex-shrink:0;">Connect Spotify →</button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;">
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">streaming</span>
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">user-read-playback-state</span>
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">user-modify-playback-state</span>
+              <span style="font-size:.65rem;background:#1a1a1a;border:1px solid #2a2a2a;color:#777;padding:2px 7px;border-radius:99px;">playlist-modify-public</span>
+            </div>
+            <div id="spOK" style="display:none;margin-top:8px;color:#1DB954;font-size:.82rem;">✓ Connected as Alex Music &nbsp;<span style="background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);font-size:.65rem;padding:2px 6px;border-radius:99px;">Spotify Premium ✓</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:8px;"><div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,#1DB954);"></div><span style="font-size:.68rem;color:#1DB954;">Encrypted Token Storage</span><div style="height:1px;flex:1;background:linear-gradient(90deg,#1DB954,transparent);"></div></div>
+      <!-- Done -->
+      <div class="card oa-step" id="oa-done" style="padding:16px;opacity:.35;pointer-events:none;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="step-icon" style="width:46px;height:46px;border-radius:12px;background:rgba(29,185,84,.1);border:2px solid #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🔗</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div><div style="font-weight:700;font-size:.92rem;">3. You're Linked!</div><div style="color:#666;font-size:.75rem;">SoundRoom bridges your X identity and Spotify Premium account</div></div>
+              <button onclick="finishConnect()" style="font-size:.78rem;padding:6px 14px;border-radius:10px;background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;font-weight:700;cursor:pointer;border:none;flex-shrink:0;" class="glow">Enter SoundRoom →</button>
+            </div>
+            <div id="syncOK" style="display:none;margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;">
+              <span style="color:#1DB954;font-size:.78rem;">✓ X Profile synced</span>
+              <span style="color:#1DB954;font-size:.78rem;">✓ Spotify library ready</span>
+              <span style="color:#1DB954;font-size:.78rem;">✓ WebSocket connected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Privacy notice -->
+    <div class="card" style="padding:14px;">
+      <div style="font-size:.72rem;font-weight:700;color:#1DB954;margin-bottom:8px;">🔒 Privacy Guarantee</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.75rem;color:#666;">
+        <div>✓ X public profile &amp; followers</div><div>✓ Spotify streaming control</div>
+        <div>✓ Send DM invites</div><div>✓ Search Spotify catalog</div>
+        <div>✓ X Space integration</div><div>✓ Save session playlists</div>
+        <div style="color:#ff4040;">✗ X DMs you didn't send</div><div style="color:#ff4040;">✗ Spotify payment info</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE: LANDING
+═══════════════════════════════════ -->
+<div id="page-landing" class="page active">
+  <section style="background:linear-gradient(180deg,#0c1a0c,#090909);padding:50px 20px 30px;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;overflow:hidden;opacity:.05;pointer-events:none;">
+      <div style="position:absolute;font-size:5rem;top:5%;left:8%;animation:floatNote 6s ease-in-out infinite;">♪</div>
+      <div style="position:absolute;font-size:3rem;top:18%;right:10%;animation:floatNote 8s ease-in-out infinite 1s;">♫</div>
+      <div style="position:absolute;font-size:4rem;bottom:15%;left:20%;animation:floatNote 7s ease-in-out infinite 2s;">♬</div>
+    </div>
+    <div style="max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:1;">
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;background:rgba(29,185,84,.08);border:1px solid rgba(29,185,84,.2);margin-bottom:14px;">
+        <div class="live-dot" style="width:6px;height:6px;"></div>
+        <span style="color:#1DB954;font-size:.72rem;font-weight:600;">X × Spotify Premium Feature Proposal — 2026</span>
+      </div>
+      <h1 style="font-size:clamp(1.8rem,5vw,3.2rem);font-weight:900;line-height:1.06;letter-spacing:-.02em;margin-bottom:12px;">
+        Stream music live.<br/>
+        <span style="background:linear-gradient(90deg,#1DB954,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Together, on X.</span>
+      </h1>
+      <p style="color:#777;font-size:.95rem;max-width:500px;margin:0 auto 22px;line-height:1.6;">Create or join a global SoundRoom — voice via X Spaces, synced Spotify music, collaborative queue, live chat. One premium experience.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
+        <button onclick="openCreateRoom()" class="glow" style="padding:10px 22px;border-radius:12px;font-weight:700;font-size:.88rem;color:#000;background:linear-gradient(135deg,#1DB954,#1ed760);cursor:pointer;border:none;">+ Create a Room</button>
+        <button onclick="showPage('global')" style="padding:10px 22px;border-radius:12px;font-weight:700;font-size:.88rem;background:#111;border:1px solid #2a2a2a;cursor:pointer;">🌍 Browse Global Rooms</button>
+        <button onclick="startTour()" style="padding:10px 22px;border-radius:12px;font-weight:700;font-size:.88rem;background:#111;border:1px solid #2a2a2a;cursor:pointer;">🧭 Take the Tour</button>
+      </div>
+    </div>
+    <div style="max-width:680px;margin:24px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div class="card" style="padding:14px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:5px;">🔗</div><div style="font-weight:600;font-size:.78rem;">OAuth Bridge</div><div style="color:#555;font-size:.68rem;margin-top:2px;">Spotify + X linked</div></div>
+      <div class="card" style="padding:14px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:5px;">🌍</div><div style="font-weight:600;font-size:.78rem;">Global Rooms</div><div style="color:#555;font-size:.68rem;margin-top:2px;">Join anyone worldwide</div></div>
+      <div class="card" style="padding:14px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:5px;">🎙️</div><div style="font-weight:600;font-size:.78rem;">X Spaces</div><div style="color:#555;font-size:.68rem;margin-top:2px;">Voice + Music live</div></div>
+      <div class="card" style="padding:14px;text-align:center;"><div style="font-size:1.4rem;margin-bottom:5px;">🏆</div><div style="font-weight:600;font-size:.78rem;">Top Rooms</div><div style="color:#555;font-size:.68rem;margin-top:2px;">Ranked leaderboard</div></div>
+    </div>
+  </section>
+  <div style="max-width:680px;margin:0 auto;padding:16px 20px;text-align:center;">
+    <button onclick="showPage('room')" style="padding:10px 28px;border-radius:12px;font-weight:700;font-size:.88rem;color:#000;background:linear-gradient(135deg,#1DB954,#1ed760);cursor:pointer;border:none;" class="glow">🎵 Open Demo Room →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE: GLOBAL ROOMS HUB
+═══════════════════════════════════ -->
+<div id="page-global" class="page">
+  <div style="max-width:900px;margin:0 auto;padding:20px;">
+
+    <!-- Hub Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;" id="globalHeader">
+      <div>
+        <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:2px;">🌍 Global SoundRooms</h2>
+        <p style="color:#555;font-size:.78rem;"><span id="liveRoomCount">247</span> rooms live right now · <span id="liveUserCount">18,432</span> listening worldwide</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;gap:5px;align-items:center;background:#0d0d0d;border:1px solid #1a1a1a;border-radius:10px;padding:5px 10px;font-size:.72rem;color:#555;">
+          <div class="live-dot" style="width:5px;height:5px;"></div> Live globally
+        </div>
+        <button onclick="openCreateRoom()" class="glow" style="font-size:.78rem;padding:7px 14px;border-radius:10px;background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;font-weight:700;cursor:pointer;border:none;">+ Create Room</button>
+      </div>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;" id="globalTabs">
+      <button onclick="globalTab('trending',this)" class="pill-tab active" id="gtab-trending">🔥 Trending</button>
+      <button onclick="globalTab('top',this)" class="pill-tab" id="gtab-top">🏆 Top Rooms</button>
+      <button onclick="globalTab('categories',this)" class="pill-tab" id="gtab-categories">🎨 Categories</button>
+      <button onclick="globalTab('foryou',this)" class="pill-tab" id="gtab-foryou">✨ For You</button>
+      <button onclick="globalTab('requests',this)" class="pill-tab" id="gtab-requests" style="position:relative;">
+        🔑 My Requests
+        <span id="pendingBadge" style="position:absolute;top:-4px;right:-4px;background:#f39c12;color:#000;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:99px;min-width:14px;text-align:center;">1</span>
+      </button>
+    </div>
+
+    <!-- Search + Sort -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="searchSortBar">
+      <div style="position:relative;flex:1;min-width:180px;">
+        <input type="text" placeholder="Search rooms..." id="globalSearch" style="width:100%;padding:9px 12px 9px 32px;font-size:.82rem;border-radius:10px;" oninput="filterGlobalRooms()"/>
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#555;font-size:.85rem;">🔍</span>
+      </div>
+      <select id="sortSelect" onchange="filterGlobalRooms()" style="padding:9px 12px;font-size:.78rem;border-radius:10px;min-width:150px;">
+        <option value="listeners">Most Listeners</option>
+        <option value="reactions">Most Reactions</option>
+        <option value="newest">Newest</option>
+        <option value="songs">Most Songs</option>
+      </select>
+    </div>
+
+    <!-- PANEL: Trending -->
+    <div id="panel-trending">
+      <!-- Featured room (hero) -->
+      <div id="featuredRoom" style="margin-bottom:16px;"></div>
+      <!-- Grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;" id="trendingGrid"></div>
+    </div>
+
+    <!-- PANEL: Top Rooms -->
+    <div id="panel-top" style="display:none;">
+      <div style="margin-bottom:12px;font-size:.78rem;font-weight:700;color:#555;">ALL-TIME TOP ROOMS THIS WEEK</div>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="topList"></div>
+    </div>
+
+    <!-- PANEL: Categories -->
+    <div id="panel-categories" style="display:none;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;" id="catGrid"></div>
+    </div>
+
+    <!-- PANEL: For You -->
+    <div id="panel-foryou" style="display:none;">
+      <div style="margin-bottom:12px;">
+        <div style="font-size:.78rem;font-weight:700;color:#555;margin-bottom:8px;">BASED ON YOUR LISTENING HISTORY</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;" id="forYouTags"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;" id="forYouGrid"></div>
+    </div>
+
+    <!-- PANEL: My Requests -->
+    <div id="panel-requests" style="display:none;">
+      <div style="font-size:.78rem;font-weight:700;color:#555;margin-bottom:10px;">YOUR JOIN REQUESTS</div>
+      <div id="myRequestsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE: ROOM
+═══════════════════════════════════ -->
+<div id="page-room" class="page">
+  <div style="display:grid;grid-template-columns:1fr 290px;height:calc(100vh - 76px);">
+    <!-- LEFT -->
+    <div style="border-right:1px solid #141414;display:flex;flex-direction:column;overflow:hidden;">
+      <!-- Room header -->
+      <div style="padding:10px 14px;border-bottom:1px solid #141414;display:flex;align-items:center;gap:6px;flex-wrap:wrap;" id="roomHeaderEl">
+        <div class="live-dot" style="width:6px;height:6px;"></div>
+        <span style="color:#ff4040;font-size:.68rem;font-weight:700;">LIVE</span>
+        <span style="color:#1DB954;font-size:.85rem;font-weight:700;" id="roomNameEl">🔥 Friday Night Vibes</span>
+        <div style="background:rgba(29,185,84,.08);border:1px solid rgba(29,185,84,.2);border-radius:99px;padding:2px 7px;font-size:.65rem;color:#1DB954;">X Space 🎙️</div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+          <span style="color:#888;font-size:.72rem;">👥 <span id="listenerCnt">12</span></span>
+          <button onclick="openInvite()" style="font-size:.68rem;padding:3px 9px;border-radius:99px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.25);color:#1DB954;cursor:pointer;border-style:solid;">+ Invite</button>
+          <button onclick="showPage('global')" style="font-size:.68rem;padding:3px 9px;border-radius:99px;background:#141414;border:1px solid #222;color:#666;cursor:pointer;">🌍 Browse</button>
+        </div>
+      </div>
+      <!-- Spaces -->
+      <div style="padding:10px 14px;border-bottom:1px solid #141414;" id="spacesPanel">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+          <div style="width:5px;height:5px;border-radius:50%;background:#ff4040;animation:livePulse 1s infinite;"></div>
+          <span style="font-size:.68rem;font-weight:700;color:#ff4040;">X SPACE ACTIVE</span>
+          <span style="font-size:.65rem;color:#444;">• Friday Night Vibes</span>
+          <div style="margin-left:auto;display:flex;gap:4px;">
+            <button onclick="toggleMic(this)" id="micBtn" style="font-size:.68rem;padding:3px 9px;border-radius:7px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);color:#1DB954;cursor:pointer;">🎙️ Live</button>
+            <button onclick="showToast('📢 Request sent to host','info')" style="font-size:.68rem;padding:3px 9px;border-radius:7px;background:#141414;border:1px solid #1e1e1e;color:#666;cursor:pointer;">✋</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;" id="speakersRow"></div>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:6px;" id="listenersRow2"></div>
+      </div>
+      <!-- Player -->
+      <div style="padding:12px 14px;border-bottom:1px solid #141414;" id="nowPlayingEl">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="position:relative;width:60px;height:60px;flex-shrink:0;">
+            <div class="vinyl" id="vinylEl" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#111,#2a2a2a);border:3px solid #1a1a1a;display:flex;align-items:center;justify-content:center;">
+              <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#1DB954,#0a5a1e);display:flex;align-items:center;justify-content:center;">
+                <div style="width:8px;height:8px;border-radius:50%;background:#090909;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="trackNameEl">Essence</div>
+            <div style="color:#777;font-size:.78rem;margin-bottom:4px;" id="artistNameEl">WizKid ft. Tems</div>
+            <div style="display:flex;align-items:center;gap:3px;">
+              <span class="eq-bar" style="height:6px;"></span><span class="eq-bar" style="height:12px;"></span>
+              <span class="eq-bar" style="height:8px;"></span><span class="eq-bar" style="height:16px;"></span>
+              <span class="eq-bar" style="height:10px;"></span>
+              <span style="color:#1DB954;font-size:.65rem;margin-left:3px;">Synced · Spotify</span>
+            </div>
+          </div>
+          <button onclick="toggleLike(this)" style="font-size:1.1rem;background:none;border:none;cursor:pointer;">🤍</button>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:.68rem;color:#444;margin-bottom:3px;"><span id="curTimeEl">1:23</span><span id="totTimeEl">3:47</span></div>
+          <div style="background:#1a1a1a;border-radius:99px;height:3px;cursor:pointer;" onclick="seekFn(event,this)">
+            <div id="progressEl" style="background:linear-gradient(90deg,#1DB954,#1ed760);height:3px;border-radius:99px;width:37%;transition:width .3s;"></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+          <button onclick="showToast('🔀 Shuffle on!','info')" style="font-size:.9rem;opacity:.5;background:none;border:none;cursor:pointer;">🔀</button>
+          <button onclick="prevTrack()" style="font-size:1.3rem;background:none;border:none;cursor:pointer;">⏮</button>
+          <button onclick="togglePlay(this)" id="playBtnEl" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1DB954,#1ed760);display:flex;align-items:center;justify-content:center;font-size:.95rem;color:#000;cursor:pointer;border:none;">⏸</button>
+          <button onclick="nextTrack()" style="font-size:1.3rem;background:none;border:none;cursor:pointer;">⏭</button>
+          <button onclick="showToast('🔁 Repeat on!','info')" style="font-size:.9rem;opacity:.5;background:none;border:none;cursor:pointer;">🔁</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+          <span style="color:#333;font-size:.72rem;">🔈</span>
+          <input type="range" min="0" max="100" value="75" style="flex:1;accent-color:#1DB954;height:3px;"/>
+          <span style="color:#333;font-size:.72rem;">🔊</span>
+        </div>
+      </div>
+      <!-- Queue -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #141414;" id="queueHeaderEl">
+          <span style="font-size:.78rem;font-weight:600;">Up Next <span style="color:#444;font-weight:400;">(6)</span></span>
+          <div style="display:flex;gap:5px;">
+            <button onclick="openAddSong()" id="addSongBtn" style="font-size:.68rem;padding:3px 9px;border-radius:7px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.25);color:#1DB954;cursor:pointer;">+ Add</button>
+            <button onclick="showToast('🔒 Queue locked!','warning')" style="font-size:.68rem;padding:3px 9px;border-radius:7px;background:#141414;border:1px solid #1e1e1e;color:#555;cursor:pointer;">🔒</button>
+          </div>
+        </div>
+        <div id="queueList" style="flex:1;overflow-y:auto;"></div>
+        <div style="border-top:1px solid #141414;padding:7px 12px;display:flex;align-items:center;gap:3px;" id="reactionsBar">
+          <span style="font-size:.65rem;color:#333;margin-right:4px;">React:</span>
+          <button onclick="rxSend('🔥')" style="font-size:1rem;background:none;border:none;cursor:pointer;">🔥</button>
+          <button onclick="rxSend('❤️')" style="font-size:1rem;background:none;border:none;cursor:pointer;">❤️</button>
+          <button onclick="rxSend('🎵')" style="font-size:1rem;background:none;border:none;cursor:pointer;">🎵</button>
+          <button onclick="rxSend('😮')" style="font-size:1rem;background:none;border:none;cursor:pointer;">😮</button>
+          <button onclick="rxSend('🙌')" style="font-size:1rem;background:none;border:none;cursor:pointer;">🙌</button>
+          <div style="margin-left:auto;font-size:.68rem;color:#444;">🔥 <span id="rxCnt">47</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;overflow:hidden;">
+      <div style="display:flex;border-bottom:1px solid #141414;">
+        <button onclick="sideTab('chat')" class="side-tab active" id="st-chat" style="flex:1;padding:9px;text-align:center;">💬 Chat</button>
+        <button onclick="sideTab('members')" class="side-tab" id="st-members" style="flex:1;padding:9px;text-align:center;">👥 Members</button>
+        <button onclick="sideTab('stats')" class="side-tab" id="st-stats" style="flex:1;padding:9px;text-align:center;">📊 Stats</button>
+      </div>
+      <div id="sp-chat" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:10px;background:#060606;display:flex;flex-direction:column;gap:8px;"></div>
+        <div id="typingEl" style="padding:3px 10px;min-height:20px;background:#060606;"></div>
+        <div style="border-top:1px solid #141414;padding:7px 8px;display:flex;gap:5px;align-items:flex-end;" id="chatInputArea">
+          <textarea id="chatInput" rows="1" placeholder="Say something 🎵" style="flex:1;padding:6px 9px;font-size:.8rem;resize:none;border-radius:9px;line-height:1.4;max-height:64px;" onkeydown="chatKey(event)" oninput="autoGrow(this)"></textarea>
+          <button onclick="sendChat()" style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1DB954,#1ed760);display:flex;align-items:center;justify-content:center;color:#000;font-size:.8rem;cursor:pointer;flex-shrink:0;border:none;">➤</button>
+        </div>
+      </div>
+      <div id="sp-members" style="flex:1;overflow-y:auto;padding:10px;background:#060606;display:none;"></div>
+      <div id="sp-stats" style="flex:1;overflow-y:auto;padding:10px;background:#060606;display:none;">
+        <div style="font-size:.7rem;font-weight:700;color:#444;margin-bottom:10px;">ROOM ANALYTICS</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="card" style="padding:12px;"><div style="font-size:.65rem;color:#444;margin-bottom:4px;">Top Track</div><div style="font-weight:700;font-size:.85rem;">Essence — WizKid ft. Tems</div><div style="color:#1DB954;font-size:.75rem;margin-top:2px;">Played 3x · 47 reactions</div></div>
+          <div class="card" style="padding:12px;"><div style="font-size:.65rem;color:#444;margin-bottom:4px;">Top Contributor</div><div style="font-weight:700;font-size:.85rem;">@jazzlover99</div><div style="color:#888;font-size:.75rem;margin-top:2px;">4 songs · 120 messages</div></div>
+          <div class="card" style="padding:12px;"><div style="font-size:.65rem;color:#444;margin-bottom:4px;">Session</div><div style="font-weight:700;color:#1DB954;font-size:1rem;">1h 23m</div><div style="color:#888;font-size:.75rem;margin-top:2px;">12 songs · 12 listeners</div></div>
+          <!-- Waveform -->
+          <div class="card" style="padding:12px;"><div style="font-size:.65rem;color:#444;margin-bottom:8px;">Listener Activity</div><div style="display:flex;align-items:flex-end;gap:3px;height:36px;" id="activityWave"></div></div>
+          <button onclick="showToast('💾 Playlist saved to Spotify!','success')" style="width:100%;padding:9px;border-radius:10px;font-weight:700;font-size:.78rem;color:#000;background:linear-gradient(135deg,#1DB954,#1ed760);cursor:pointer;border:none;">💾 Save to Spotify</button>
+          <button onclick="showToast('🐦 Shared on X!','success')" style="width:100%;padding:9px;border-radius:10px;font-weight:700;font-size:.78rem;background:#111;border:1px solid #222;cursor:pointer;">🐦 Post on X</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE: API ARCHITECTURE
+═══════════════════════════════════ -->
+<div id="page-apiarch" class="page">
+  <div style="max-width:640px;margin:0 auto;padding:28px 20px;">
+    <h2 style="font-size:1.3rem;font-weight:800;text-align:center;margin-bottom:4px;">⚙️ API Architecture</h2>
+    <p style="color:#555;font-size:.82rem;text-align:center;margin-bottom:20px;">How X + Spotify APIs power SoundRoom in real-time</p>
+    <div class="card" style="padding:16px;margin-bottom:14px;">
+      <div style="font-size:.7rem;font-weight:700;color:#1DB954;text-align:center;margin-bottom:14px;">REAL-TIME DATA FLOW</div>
+      <div style="text-align:center;margin-bottom:6px;"><div style="display:inline-flex;align-items:center;gap:6px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:9px;padding:7px 14px;font-size:.82rem;font-weight:600;">📱 User Device (X App)</div></div>
+      <div style="text-align:center;font-size:.65rem;color:#1DB954;margin:5px 0;">↕ WebSocket (wss://soundroom.x.com)</div>
+      <div style="text-align:center;margin-bottom:6px;"><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(29,185,84,.07);border:1px solid rgba(29,185,84,.25);border-radius:9px;padding:7px 16px;font-size:.82rem;font-weight:700;color:#1DB954;">🔗 SoundRoom Orchestration Layer</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;">
+        <div><div style="text-align:center;font-size:.65rem;color:#1DB954;margin-bottom:5px;">↕ OAuth 2.0 + REST</div><div style="background:#111;border:1px solid #fff;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:1rem;margin-bottom:3px;">𝕏</div><div style="font-weight:700;font-size:.82rem;">X API v2</div><div style="color:#555;font-size:.65rem;margin-top:3px;line-height:1.5;">Auth · DMs · Notifications · Spaces WebRTC · Followers</div></div></div>
+        <div><div style="text-align:center;font-size:.65rem;color:#1DB954;margin-bottom:5px;">↕ OAuth 2.0 + REST</div><div style="background:#111;border:1px solid #1DB954;border-radius:9px;padding:10px;text-align:center;"><div style="font-size:1rem;margin-bottom:3px;">🎵</div><div style="font-weight:700;font-size:.82rem;color:#1DB954;">Spotify Web API</div><div style="color:#555;font-size:.65rem;margin-top:3px;line-height:1.5;">Playback · Search · Queue · Connect · Playlists</div></div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card" style="padding:14px;"><div style="font-size:.68rem;font-weight:700;color:#1DB954;margin-bottom:8px;">X API v2 — Endpoints</div><div style="font-family:monospace;font-size:.72rem;color:#888;line-height:1.8;"><div><span style="color:#1DB954;">GET</span> /2/users/me · /2/users/:id/followers</div><div><span style="color:#1DB954;">POST</span> /2/dm_conversations · /2/spaces</div><div><span style="color:#4a90d9;">WS</span> /2/spaces/:id/participants</div></div></div>
+      <div class="card" style="padding:14px;"><div style="font-size:.68rem;font-weight:700;color:#1DB954;margin-bottom:8px;">Spotify Web API — Endpoints</div><div style="font-family:monospace;font-size:.72rem;color:#888;line-height:1.8;"><div><span style="color:#1DB954;">GET</span> /v1/search?q=&amp;type=track</div><div><span style="color:#f39c12;">PUT</span> /v1/me/player/play · /v1/me/player/pause</div><div><span style="color:#1DB954;">POST</span> /v1/me/player/queue · /v1/users/:id/playlists</div><div><span style="color:#4a90d9;">SDK</span> Spotify Connect — real-time sync</div></div></div>
+      <div class="card" style="padding:14px;"><div style="font-size:.68rem;font-weight:700;color:#4a90d9;margin-bottom:8px;">SoundRoom WebSocket Events</div><div style="font-family:monospace;font-size:.72rem;color:#888;line-height:1.8;"><div><span style="color:#4a90d9;">EMIT</span> song_change · member_join · room_created</div><div><span style="color:#4a90d9;">ON</span> chat_message · vote_update · reaction</div><div><span style="color:#4a90d9;">EMIT</span> join_request · request_approved · request_denied</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE: PROPOSAL
+═══════════════════════════════════ -->
+<div id="page-proposal" class="page">
+  <div style="max-width:620px;margin:0 auto;padding:28px 20px;">
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;background:rgba(29,185,84,.08);border:1px solid rgba(29,185,84,.2);margin-bottom:10px;"><span style="color:#1DB954;font-size:.72rem;font-weight:600;">📋 Official Feature Proposal</span></div>
+      <h1 style="font-size:1.6rem;font-weight:800;margin-bottom:4px;">SoundRoom</h1>
+      <p style="color:#666;font-size:.82rem;">Collaborative Live Listening for X × Spotify Premium</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="padding:16px;"><h3 style="font-weight:700;font-size:.9rem;margin-bottom:8px;"><span style="color:#1DB954;">01</span> Executive Summary</h3><p style="color:#888;font-size:.82rem;line-height:1.65;">SoundRoom merges X Spaces with Spotify's streaming API into the first native social listening platform. Premium users can create global or private rooms, invite followers, queue songs collaboratively, and chat — all synced in real-time.</p></div>
+      <div class="card" style="padding:16px;"><h3 style="font-weight:700;font-size:.9rem;margin-bottom:8px;"><span style="color:#1DB954;">02</span> The Problem</h3><div style="display:flex;flex-direction:column;gap:5px;font-size:.82rem;color:#888;"><div>❌ Music sharing on X is passive — just links, no co-listening</div><div>❌ Spotify has no social layer for live group sessions</div><div>❌ X Spaces has voice but no native Spotify music integration</div></div></div>
+      <div class="card" style="padding:16px;"><h3 style="font-weight:700;font-size:.9rem;margin-bottom:10px;"><span style="color:#1DB954;">03</span> Business Impact</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;"><div style="background:rgba(29,185,84,.06);border-radius:10px;padding:10px;"><div style="font-size:1.4rem;font-weight:800;color:#1DB954;">+23%</div><div style="font-size:.68rem;color:#666;margin-top:2px;">X Premium retention</div></div><div style="background:rgba(29,185,84,.06);border-radius:10px;padding:10px;"><div style="font-size:1.4rem;font-weight:800;color:#1DB954;">+18%</div><div style="font-size:.68rem;color:#666;margin-top:2px;">Spotify conversions</div></div><div style="background:rgba(29,185,84,.06);border-radius:10px;padding:10px;"><div style="font-size:1.4rem;font-weight:800;color:#1DB954;">3.4×</div><div style="font-size:.68rem;color:#666;margin-top:2px;">Daily time in app</div></div></div></div>
+      <div class="card" style="padding:16px;"><h3 style="font-weight:700;font-size:.9rem;margin-bottom:8px;"><span style="color:#1DB954;">04</span> Why SoundRoom Wins</h3><div style="display:flex;flex-direction:column;gap:5px;font-size:.82rem;color:#888;"><div>🚀 No extra app — lives inside X where music conversation happens</div><div>🌍 Global Rooms let anyone discover and join worldwide sessions</div><div>🎙️ First to merge X Spaces voice with synced Spotify playback</div><div>🏆 Ranked leaderboards create virality and social competition</div><div>🔑 Request-to-join for artists = exclusive listening parties</div></div></div>
+      <div style="text-align:center;"><button onclick="showPage('room')" style="padding:10px 24px;border-radius:12px;font-weight:700;font-size:.88rem;color:#000;background:linear-gradient(135deg,#1DB954,#1ed760);cursor:pointer;border:none;" class="glow">🎵 See Demo Room →</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+const TRACKS=[
+  {id:1,title:'Essence',artist:'WizKid ft. Tems',duration:'3:47',votes:12,addedBy:'@alexmusic',playing:true,color:'#2d6b2d'},
+  {id:2,title:'Love Story',artist:'Taylor Swift',duration:'3:55',votes:9,addedBy:'@jazzlover99',playing:false,color:'#6b2d2d'},
+  {id:3,title:'HUMBLE.',artist:'Kendrick Lamar',duration:'2:57',votes:8,addedBy:'@beatmaster',playing:false,color:'#2d2d6b'},
+  {id:4,title:'Golden',artist:'Jill Scott',duration:'5:18',votes:6,addedBy:'@soulvibes',playing:false,color:'#6b6b2d'},
+  {id:5,title:'Goat',artist:'Bloody Civilian',duration:'3:21',votes:4,addedBy:'@naijanation',playing:false,color:'#2d5a6b'},
+  {id:6,title:"Creepin'",artist:'Metro Boomin ft. The Weeknd',duration:'3:36',votes:3,addedBy:'@nightowl22',playing:false,color:'#5a2d6b'},
+];
+const MEMBERS=[
+  {handle:'@alexmusic',name:'Alex M.',av:'A',role:'host',active:true,color:'#1DB954',speaking:true},
+  {handle:'@jazzlover99',name:'Jazz',av:'J',role:'member',active:true,color:'#4a90d9',speaking:false},
+  {handle:'@beatmaster',name:'BeatM.',av:'B',role:'member',active:true,color:'#e74c3c',speaking:true},
+  {handle:'@soulvibes',name:'Soul V.',av:'S',role:'member',active:true,color:'#f39c12',speaking:false},
+  {handle:'@naijanation',name:'Naija N.',av:'N',role:'member',active:false,color:'#9b59b6',speaking:false},
+  {handle:'@nightowl22',name:'Night Owl',av:'N',role:'member',active:true,color:'#1abc9c',speaking:false},
+  {handle:'@melodymaven',name:'Melody M.',av:'M',role:'member',active:true,color:'#e91e63',speaking:false},
+  {handle:'@bassline99',name:'Bass Line',av:'B',role:'member',active:true,color:'#2196f3',speaking:false},
+];
+const SP_SEARCH=[
+  {title:'Essence',artist:'WizKid ft. Tems',dur:'3:47'},
+  {title:'Blinding Lights',artist:'The Weeknd',dur:'3:20'},
+  {title:'Peaches',artist:'Justin Bieber',dur:'3:18'},
+  {title:'Mood',artist:'24kGoldn ft. iann dior',dur:'2:21'},
+  {title:'Montero',artist:'Lil Nas X',dur:'2:18'},
+  {title:'drivers license',artist:'Olivia Rodrigo',dur:'4:02'},
+  {title:'Leave The Door Open',artist:'Bruno Mars',dur:'4:02'},
+  {title:'Golden',artist:'Jill Scott',dur:'5:18'},
+  {title:'Rich Flex',artist:'Drake ft. 21 Savage',dur:'3:56'},
+  {title:'Ojuelegba',artist:'Wizkid',dur:'3:37'},
+];
+const FOLLOWERS=[
+  {handle:'@musicfan2026',name:'Music Fan',color:'#4a90d9'},
+  {handle:'@djstreet_nyc',name:'DJ Street',color:'#9b59b6'},
+  {handle:'@beatboxer99',name:'Beat Boxer',color:'#f39c12'},
+  {handle:'@vibeout_only',name:'Vibe Out',color:'#1abc9c'},
+  {handle:'@thecoolkid__',name:'The Cool Kid',color:'#e91e63'},
+];
+const CHAT_SEED=[
+  {user:'@jazzlover99',msg:'this song is EVERYTHING 🔥',time:'1:20',color:'#4a90d9'},
+  {user:'@beatmaster',msg:'WizKid never misses 🎵',time:'1:21',color:'#e74c3c'},
+  {user:'@soulvibes',msg:'added Golden, trust me 🙏',time:'1:22',color:'#f39c12'},
+  {user:'@alexmusic',msg:'love the energy tonight ❤️',time:'1:23',color:'#1DB954',isHost:true},
+];
+
+// ── Global Room Data ──
+const ALL_ROOMS=[
+  {id:1,name:'🔥 Friday Night Vibes',host:'@alexmusic',listeners:247,reactions:1840,songs:34,peak:312,genre:'afrobeats',playing:'Essence — WizKid ft. Tems',av:'A',color:'#1DB954',privacy:'public',space:true,hot:true,trending:true,tags:['afrobeats','naija','chill'],rank:1,description:'The biggest Afrobeats room on X every Friday. Open to all!'},
+  {id:2,name:'🏆 Hip-Hop Cypher Room',host:'@beatmaster',listeners:198,reactions:1230,songs:28,peak:250,genre:'hiphop',playing:'HUMBLE. — Kendrick Lamar',av:'B',color:'#e74c3c',privacy:'public',space:true,hot:true,trending:true,tags:['hiphop','rap','bars'],rank:2,description:'Daily hip-hop cypher. Bring bars, not egos.'},
+  {id:3,name:'💜 Late Night R&B Lounge',host:'@soulvibes',listeners:156,reactions:980,songs:22,peak:200,genre:'rnb',playing:'Golden — Jill Scott',av:'S',color:'#9b59b6',privacy:'request',space:false,hot:false,trending:true,tags:['r&b','soul','late night'],rank:3,description:'Premium R&B vibes after midnight. Request to join.'},
+  {id:4,name:'🍃 Lo-Fi Study Hall',host:'@chillwave',listeners:423,reactions:2100,songs:89,peak:500,genre:'lofi',playing:'Rainy Day Study — Various',av:'C',color:'#4caf50',privacy:'public',space:false,hot:true,trending:true,tags:['lofi','study','focus','chill'],rank:4,description:'The largest study room on SoundRoom. Always open.'},
+  {id:5,name:'⭐ Swifties World Tour',host:'@melodymaven',listeners:312,reactions:3200,songs:44,peak:400,genre:'pop',playing:'Love Story — Taylor Swift',av:'M',color:'#e91e63',privacy:'public',space:true,hot:true,trending:false,tags:['taylor','pop','swifties'],rank:5,description:'24/7 Taylor Swift listening party. All eras welcome!'},
+  {id:6,name:'🌍 Afrobeats All Day',host:'@naijanation',listeners:189,reactions:1100,songs:31,peak:220,genre:'afrobeats',playing:'Ojuelegba — Wizkid',av:'N',color:'#f39c12',privacy:'public',space:true,hot:false,trending:true,tags:['afrobeats','naija','highlife'],rank:6,description:'Non-stop Afrobeats from Lagos to London.'},
+  {id:7,name:'🎷 Jazz After Dark',host:'@jazzlover99',listeners:67,reactions:420,songs:15,peak:90,genre:'jazz',playing:'Kind of Blue — Miles Davis',av:'J',color:'#4a90d9',privacy:'request',space:false,hot:false,trending:false,tags:['jazz','blues','smooth'],rank:7,description:'Curated jazz for the cultured listener. Invite only.'},
+  {id:8,name:'⚡ Electronic Pulse',host:'@djstreet_nyc',listeners:134,reactions:760,songs:19,peak:180,genre:'electronic',playing:'One More Time — Daft Punk',av:'D',color:'#00bcd4',privacy:'public',space:true,hot:false,trending:false,tags:['edm','house','techno'],rank:8,description:'Non-stop electronic from house to techno.'},
+  {id:9,name:'🔒 VIP R&B Vault',host:'@quietstorm',listeners:22,reactions:310,songs:8,peak:30,genre:'rnb',playing:'Adorn — Miguel',av:'Q',color:'#795548',privacy:'private',space:false,hot:false,trending:false,tags:['r&b','private','vip'],rank:9,description:'Exclusive private room. Members only.'},
+  {id:10,name:'💃 Latin Heat',host:'@salsaking',listeners:201,reactions:1560,songs:37,peak:260,genre:'latin',playing:'Tití Me Preguntó — Bad Bunny',av:'L',color:'#ff5722',privacy:'public',space:true,hot:true,trending:true,tags:['latin','reggaeton','bachata'],rank:10,description:'Latin vibes 24/7. Join the heat!'},
+  {id:11,name:'🎤 UK Rap Corner',host:'@grime_god',listeners:88,reactions:530,songs:14,peak:120,genre:'hiphop',playing:'Shutdown — Skepta',av:'U',color:'#607d8b',privacy:'public',space:false,hot:false,trending:false,tags:['ukrap','grime','drill'],rank:11,description:'Best of UK rap, grime and drill.'},
+  {id:12,name:'🌙 Midnight Pop',host:'@nightowl22',listeners:95,reactions:670,songs:18,peak:110,genre:'pop',playing:'Levitating — Dua Lipa',av:'N',color:'#7c4dff',privacy:'public',space:false,hot:false,trending:false,tags:['pop','indie','midnight'],rank:12,description:'Pop bangers for the night owls.'},
+];
+const CATEGORIES=[
+  {genre:'afrobeats',label:'Afrobeats',emoji:'🌍',color:'#f39c12',rooms:34,listeners:2840,topRoom:'Friday Night Vibes'},
+  {genre:'hiphop',label:'Hip-Hop',emoji:'🎤',color:'#e74c3c',rooms:28,listeners:2100,topRoom:'Hip-Hop Cypher Room'},
+  {genre:'rnb',label:'R&B / Soul',emoji:'🎹',color:'#9b59b6',rooms:22,listeners:1450,topRoom:'Late Night R&B Lounge'},
+  {genre:'pop',label:'Pop',emoji:'✨',color:'#e91e63',rooms:41,listeners:3800,topRoom:'Swifties World Tour'},
+  {genre:'lofi',label:'Lo-Fi',emoji:'🍃',color:'#4caf50',rooms:19,listeners:1900,topRoom:'Lo-Fi Study Hall'},
+  {genre:'electronic',label:'Electronic',emoji:'⚡',color:'#00bcd4',rooms:16,listeners:980,topRoom:'Electronic Pulse'},
+  {genre:'latin',label:'Latin',emoji:'💃',color:'#ff5722',rooms:24,listeners:2300,topRoom:'Latin Heat'},
+  {genre:'jazz',label:'Jazz',emoji:'🎷',color:'#4a90d9',rooms:11,listeners:520,topRoom:'Jazz After Dark'},
+];
+// pending requests state
+let myRequests=[];
+let selectedPrivacy='public';
+let switchOn=true;
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let isPlaying=true,currentIdx=0,progress=37,pTimer=null,rxCount=47;
+let chatLog=[...CHAT_SEED],queueData=[...TRACKS];
+let xConnected=false,spConnected=false;
+
+// ════════════════════════════════════════
+// TOUR
+// ════════════════════════════════════════
+const TOUR=[
+  {title:'Welcome to SoundRoom! 🎵',desc:'This 11-step tour covers every feature. SoundRoom lets you stream Spotify music live with friends inside X — with voice, chat, queue, and global rooms.',targetId:null,page:null},
+  {title:'🔗 Connect Accounts',desc:'First, link your X + Spotify accounts via OAuth 2.0. Click "Connect" in the nav to see the full account linking flow with exact API scopes.',targetId:'tab-connect',page:'landing'},
+  {title:'🌍 Global Rooms Hub',desc:'The Global tab shows every live room worldwide — trending, top-ranked, by category, and personalized "For You" picks based on your taste.',targetId:'tab-global',page:'landing'},
+  {title:'+ Create a Room',desc:'Click "Create Room" to launch your own. Choose a genre, set privacy (Public / Request / Private), and optionally start an X Space for live voice.',targetId:'createRoomBtn',page:'landing'},
+  {title:'🏆 Top Rooms Leaderboard',desc:'The Top Rooms tab ranks every active room by listeners, reactions, and songs played. Gold/Silver/Bronze badges for the top 3 rooms.',targetId:'gtab-top',page:'global'},
+  {title:'🎨 Browse by Category',desc:'The Categories tab shows all genres — click any to see all live rooms in that genre, sorted by activity.',targetId:'gtab-categories',page:'global'},
+  {title:'🔑 Request to Join',desc:'Private and request-only rooms show a "Request" button. Send a note to the host — you\'ll get an X notification when approved or denied.',targetId:'gtab-requests',page:'global'},
+  {title:'🎙️ X Spaces + Music',desc:'Inside a room, an X Space runs live alongside the music. Talk with fellow listeners while everyone hears the same Spotify song simultaneously.',targetId:'spacesPanel',page:'room'},
+  {title:'🎵 Synced Spotify Player',desc:'All members hear the same millisecond via Spotify Connect. Play, pause, seek — updates happen for everyone in the room instantly.',targetId:'nowPlayingEl',page:'room'},
+  {title:'🎛️ Collaborative Queue + Reactions',desc:'Friends add songs from Spotify and vote them up. React with emojis that float live across everyone\'s screen.',targetId:'reactionsBar',page:'room'},
+  {title:"You're all set! 🚀",desc:'That\'s SoundRoom — X voice + Spotify music + global rooms + live chat. Check the API tab for the tech stack, or Proposal for the business case.',targetId:null,page:null},
+];
+let tourStep=0;
+
+function startTour(){tourStep=0;document.getElementById('tourOverlay').style.display='block';applyTourStep();}
+function endTour(){document.getElementById('tourOverlay').style.display='none';document.getElementById('tourSpot').style.display='none';}
+function tourNext(){if(tourStep<TOUR.length-1){tourStep++;applyTourStep();}else endTour();}
+function tourBack(){if(tourStep>0){tourStep--;applyTourStep();}}
+function applyTourStep(){
+  const s=TOUR[tourStep];
+  if(s.page)showPage(s.page);
+  document.getElementById('tourNum').textContent=tourStep+1;
+  document.getElementById('tourLabel').textContent=`Step ${tourStep+1} of ${TOUR.length}`;
+  document.getElementById('tourTitle').textContent=s.title;
+  document.getElementById('tourDesc').textContent=s.desc;
+  document.getElementById('tourBk').style.opacity=tourStep===0?.3:1;
+  document.getElementById('tourNx').textContent=tourStep===TOUR.length-1?'Finish ✓':'Next →';
+  // dots
+  document.getElementById('tourDots').innerHTML=TOUR.map((_,i)=>`<div class="tdot" style="background:${i===tourStep?'#1DB954':i<tourStep?'rgba(29,185,84,.4)':'#2a2a2a'};width:${i===tourStep?'18px':'7px'};height:7px;border-radius:99px;"></div>`).join('');
+  // spotlight
+  const spot=document.getElementById('tourSpot');
+  if(s.targetId){
+    const el=document.getElementById(s.targetId);
+    if(el){
+      const r=el.getBoundingClientRect();
+      spot.style.cssText=`display:block;left:${r.left-6}px;top:${r.top-6}px;width:${r.width+12}px;height:${r.height+12}px;border-radius:12px;border:2px solid #1DB954;animation:tourSpot 2s ease-in-out infinite;position:fixed;z-index:8005;pointer-events:none;`;
+      const card=document.getElementById('tourCard');
+      const mid=window.innerHeight/2;
+      card.style.transform='none';
+      if(r.top<mid){card.style.top=Math.min(r.bottom+14,window.innerHeight-240)+'px';card.style.bottom='auto';}
+      else{card.style.bottom=(window.innerHeight-r.top+14)+'px';card.style.top='auto';}
+      card.style.left=Math.max(10,Math.min(r.left,window.innerWidth-330))+'px';
+    }
+  } else {
+    spot.style.display='none';
+    const c=document.getElementById('tourCard');
+    c.style.top='50%';c.style.left='50%';c.style.transform='translate(-50%,-50%)';c.style.bottom='auto';
+  }
+}
+
+// ════════════════════════════════════════
+// PAGE ROUTING
+// ════════════════════════════════════════
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
+  const pg=document.getElementById('page-'+p);const tb=document.getElementById('tab-'+p);
+  if(pg)pg.classList.add('active');if(tb)tb.classList.add('active');
+  if(p==='room'){initRoom();}
+  if(p==='global'){initGlobal();}
+}
+
+// ════════════════════════════════════════
+// OAUTH
+// ════════════════════════════════════════
+function connectX(btn){btn.textContent='Connecting…';btn.disabled=true;btn.style.opacity='.5';setTimeout(()=>{xConnected=true;document.getElementById('xOK').style.display='block';btn.style.display='none';document.getElementById('oa-x').classList.add('done');document.getElementById('oa-x').classList.remove('active-oa');const sp=document.getElementById('oa-sp');sp.style.opacity='1';sp.style.pointerEvents='auto';sp.classList.add('active-oa');showToast('✓ X connected as @alexmusic','success');},1400);}
+function connectSp(btn){btn.textContent='Connecting…';btn.disabled=true;btn.style.opacity='.5';setTimeout(()=>{spConnected=true;document.getElementById('spOK').style.display='block';btn.style.display='none';document.getElementById('oa-sp').classList.add('done');document.getElementById('oa-sp').classList.remove('active-oa');const dn=document.getElementById('oa-done');dn.style.opacity='1';dn.style.pointerEvents='auto';dn.classList.add('active-oa');document.getElementById('syncOK').style.display='flex';showToast('✓ Spotify Premium connected!','success');setTimeout(()=>showToast('🔗 Accounts linked! SoundRoom ready','info'),800);},1400);}
+function finishConnect(){if(!xConnected||!spConnected){showToast('⚠️ Connect both accounts first','warning');return;}showPage('global');showToast('🎵 Welcome! Explore global rooms 🌍','success');}
+
+// ════════════════════════════════════════
+// GLOBAL HUB
+// ════════════════════════════════════════
+let currentGlobalTab='trending';
+function initGlobal(){globalTab('trending',document.getElementById('gtab-trending'));renderActivityWave();}
+function globalTab(tab,btn){
+  currentGlobalTab=tab;
+  document.querySelectorAll('.pill-tab').forEach(b=>{b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  ['trending','top','categories','foryou','requests'].forEach(t=>{const p=document.getElementById('panel-'+t);if(p)p.style.display='none';});
+  const sb=document.getElementById('searchSortBar');if(sb)sb.style.display=(tab==='categories'||tab==='requests')?'none':'flex';
+  document.getElementById('panel-'+tab).style.display='block';
+  if(tab==='trending')renderTrending();
+  else if(tab==='top')renderTopRooms();
+  else if(tab==='categories')renderCategories();
+  else if(tab==='foryou')renderForYou();
+  else if(tab==='requests')renderMyRequests();
+}
+function filterGlobalRooms(){if(currentGlobalTab==='trending')renderTrending();else if(currentGlobalTab==='top')renderTopRooms();else if(currentGlobalTab==='foryou')renderForYou();}
+
+function getSortedRooms(rooms){
+  const q=(document.getElementById('globalSearch')?.value||'').toLowerCase();
+  const sort=document.getElementById('sortSelect')?.value||'listeners';
+  let r=rooms.filter(rm=>!q||rm.name.toLowerCase().includes(q)||rm.genre.includes(q)||rm.tags.some(t=>t.includes(q)));
+  if(sort==='listeners')r.sort((a,b)=>b.listeners-a.listeners);
+  else if(sort==='reactions')r.sort((a,b)=>b.reactions-a.reactions);
+  else if(sort==='songs')r.sort((a,b)=>b.songs-a.songs);
+  else if(sort==='newest')r.sort((a,b)=>b.id-a.id);
+  return r;
+}
+
+// ── Trending ──
+function renderTrending(){
+  const rooms=getSortedRooms(ALL_ROOMS.filter(r=>r.trending||r.hot));
+  const featured=rooms[0];
+  // Featured hero card
+  document.getElementById('featuredRoom').innerHTML=featured?`
+    <div style="background:linear-gradient(135deg,${featured.color}18,${featured.color}06);border:1px solid ${featured.color}35;border-radius:16px;padding:18px;cursor:pointer;" onclick="joinOrRequest(${featured.id})" class="card-hover">
+      <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+          <div style="width:52px;height:52px;border-radius:14px;background:${featured.color}33;border:2px solid ${featured.color};display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:${featured.color};flex-shrink:0;">${featured.av}</div>
+          <div style="min-width:0;">
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">
+              <span style="font-weight:800;font-size:1rem;">${featured.name}</span>
+              <span style="font-size:.6rem;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;padding:2px 6px;border-radius:99px;font-weight:700;" class="rank-badge">#1 TRENDING</span>
+              ${featured.hot?'<span style="font-size:.9rem;" class="hot-flame">🔥</span>':''}
+            </div>
+            <div style="font-size:.75rem;color:#888;">by ${featured.host} · ${featured.description}</div>
+          </div>
+        </div>
+        <button style="padding:8px 18px;border-radius:10px;font-weight:700;font-size:.8rem;color:#000;background:linear-gradient(135deg,#1DB954,#1ed760);border:none;cursor:pointer;flex-shrink:0;" class="glow">${featured.privacy==='public'?'Join Room →':'Request →'}</button>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:.9rem;">👥</span><span style="font-size:.82rem;font-weight:700;color:#fff;">${featured.listeners.toLocaleString()}</span><span style="font-size:.7rem;color:#555;">listening</span></div>
+        <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:.9rem;">🔥</span><span style="font-size:.82rem;font-weight:700;color:#fff;">${featured.reactions.toLocaleString()}</span><span style="font-size:.7rem;color:#555;">reactions</span></div>
+        <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:.9rem;">🎵</span><span style="font-size:.82rem;font-weight:700;color:#fff;">${featured.songs}</span><span style="font-size:.7rem;color:#555;">songs played</span></div>
+        ${featured.space?'<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:.9rem;">🎙️</span><span style="font-size:.75rem;color:#4a90d9;">X Space Live</span></div>':''}
+      </div>
+      <div style="margin-top:10px;font-size:.78rem;color:#888;">🎵 Now playing: ${featured.playing}</div>
+    </div>`:''  ;
+  // Grid
+  document.getElementById('trendingGrid').innerHTML=rooms.slice(1).map(r=>roomCard(r)).join('');
+}
+
+// ── Top Rooms ──
+function renderTopRooms(){
+  const rooms=getSortedRooms(ALL_ROOMS);
+  document.getElementById('topList').innerHTML=rooms.map((r,i)=>`
+    <div style="background:#111;border:1px solid ${i<3?['#FFD700','#C0C0C0','#CD7F32'][i]:'#1e1e1e'};border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;" onclick="joinOrRequest(${r.id})" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='none'">
+      <!-- Rank -->
+      <div style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;flex-shrink:0;${i<3?`background:linear-gradient(135deg,${['#FFD700,#FFA500','#C0C0C0,#999','#CD7F32,#8B4513'][i]});color:${i===2?'#fff':'#000'}`:' background:#1a1a1a;color:#666;font-size:.78rem;border:1px solid #2a2a2a;'}">${i<3?['🥇','🥈','🥉'][i]:`#${i+1}`}</div>
+      <!-- Avatar -->
+      <div style="width:40px;height:40px;border-radius:12px;background:${r.color}22;border:2px solid ${r.color};display:flex;align-items:center;justify-content:center;font-weight:800;color:${r.color};flex-shrink:0;">${r.av}</div>
+      <!-- Info -->
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;">
+          <span style="font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</span>
+          ${r.hot?'<span class="hot-flame" style="font-size:.85rem;">🔥</span>':''}
+          ${r.space?'<span style="font-size:.65rem;color:#4a90d9;">🎙️</span>':''}
+          <span style="font-size:.6rem;padding:2px 6px;border-radius:99px;background:${r.privacy==='public'?'rgba(29,185,84,.1)':r.privacy==='request'?'rgba(255,165,0,.1)':'rgba(255,60,60,.1)'};color:${r.privacy==='public'?'#1DB954':r.privacy==='request'?'#f39c12':'#ff4040'};border:1px solid ${r.privacy==='public'?'rgba(29,185,84,.25)':r.privacy==='request'?'rgba(255,165,0,.25)':'rgba(255,60,60,.25)'};">${r.privacy==='public'?'🌍 Public':r.privacy==='request'?'🔑 Request':'🔒 Private'}</span>
+        </div>
+        <div style="font-size:.7rem;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🎵 ${r.playing}</div>
+        <!-- Mini activity bar -->
+        <div style="display:flex;gap:2px;margin-top:5px;align-items:flex-end;height:16px;" id="tbar-${r.id}"></div>
+      </div>
+      <!-- Stats -->
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:.82rem;font-weight:700;">👥 ${r.listeners.toLocaleString()}</div>
+        <div style="font-size:.7rem;color:#555;">🔥 ${r.reactions.toLocaleString()}</div>
+      </div>
+      <!-- Join btn -->
+      <button onclick="event.stopPropagation();joinOrRequest(${r.id})" style="padding:6px 12px;border-radius:8px;font-weight:700;font-size:.72rem;border:none;cursor:pointer;flex-shrink:0;${r.privacy==='public'?'background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;':'background:rgba(255,165,0,.12);border:1px solid rgba(255,165,0,.3);color:#f39c12;'}">${r.privacy==='public'?'Join':'Request'}</button>
+    </div>
+  `).join('');
+  // Render activity bars
+  rooms.forEach(r=>{
+    const el=document.getElementById('tbar-'+r.id);
+    if(!el)return;
+    const heights=[0.4,0.6,0.8,0.5,0.9,0.7,1.0,0.6,0.8,0.5].map(h=>Math.floor(h*16));
+    el.innerHTML=heights.map(h=>`<div style="width:4px;height:${h}px;border-radius:2px 2px 0 0;background:#1DB954;opacity:.6;"></div>`).join('');
+  });
+}
+
+// ── Categories ──
+function renderCategories(){
+  document.getElementById('catGrid').innerHTML=CATEGORIES.map(c=>`
+    <div class="cat-card" onclick="filterByCat('${c.genre}')">
+      <div style="height:80px;background:linear-gradient(135deg,${c.color}33,${c.color}08);display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative;overflow:hidden;">
+        ${c.emoji}
+        <div style="position:absolute;bottom:6px;right:8px;font-size:.6rem;font-weight:700;color:${c.color};background:${c.color}20;padding:2px 6px;border-radius:99px;border:1px solid ${c.color}40;">${c.rooms} rooms LIVE</div>
+      </div>
+      <div style="padding:12px;">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:2px;">${c.label}</div>
+        <div style="font-size:.72rem;color:#555;margin-bottom:6px;">👥 ${c.listeners.toLocaleString()} listening</div>
+        <!-- Mini sparkline -->
+        <div style="display:flex;align-items:flex-end;gap:2px;height:20px;margin-bottom:8px;">
+          ${[0.5,0.7,0.4,0.9,0.6,0.8,1.0,0.7].map(h=>`<div style="flex:1;height:${Math.floor(h*20)}px;background:${c.color};opacity:.6;border-radius:2px 2px 0 0;"></div>`).join('')}
+        </div>
+        <div style="font-size:.7rem;color:#444;">Top: ${c.topRoom}</div>
+      </div>
+    </div>
+  `).join('');
+}
+function filterByCat(genre){
+  globalTab('trending',document.getElementById('gtab-trending'));
+  document.getElementById('globalSearch').value=genre;
+  filterGlobalRooms();
+  showToast(`🎨 Showing ${genre} rooms`,'info');
+}
+
+// ── For You ──
+function renderForYou(){
+  const tags=['afrobeats','r&b','hip-hop','chill'];
+  document.getElementById('forYouTags').innerHTML=tags.map(t=>`<span style="font-size:.7rem;padding:4px 10px;border-radius:99px;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.25);color:#1DB954;">${t}</span>`).join('');
+  const foryou=ALL_ROOMS.filter(r=>['afrobeats','rnb','hiphop','lofi'].includes(r.genre));
+  document.getElementById('forYouGrid').innerHTML=foryou.map(r=>roomCard(r)).join('');
+}
+
+// ── My Requests ──
+function renderMyRequests(){
+  document.getElementById('pendingBadge').style.display=myRequests.length?'block':'none';
+  if(!myRequests.length){
+    document.getElementById('myRequestsList').innerHTML='<div style="text-align:center;padding:40px;color:#333;font-size:.85rem;">No pending requests.<br/><span style="color:#555;font-size:.78rem;">Browse rooms and click "Request" on private rooms.</span></div>';return;
+  }
+  document.getElementById('myRequestsList').innerHTML=myRequests.map((req,i)=>`
+    <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:${req.color}22;border:2px solid ${req.color};display:flex;align-items:center;justify-content:center;font-weight:700;color:${req.color};flex-shrink:0;">${req.av}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:2px;">${req.name}</div>
+        <div style="font-size:.72rem;color:#555;">Requested ${req.time}</div>
+      </div>
+      <div style="padding:4px 10px;border-radius:99px;font-size:.7rem;font-weight:600;" class="${req.status==='pending'?'req-pending':req.status==='approved'?'req-approved':'req-denied'}">${req.status==='pending'?'⏳ Pending':req.status==='approved'?'✓ Approved':'✗ Denied'}</div>
+      ${req.status==='approved'?`<button onclick="showPage('room');closeRequestJoin();" style="font-size:.72rem;padding:4px 10px;border-radius:8px;background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;font-weight:700;cursor:pointer;border:none;">Join →</button>`:''}
+    </div>
+  `).join('');
+}
+
+// ── Room Card ──
+function roomCard(r){
+  return`<div class="room-card ${r.privacy!=='public'?'private-card':''}" onclick="joinOrRequest(${r.id})">
+    <div style="padding:14px;">
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:${r.color}22;border:2px solid ${r.color};display:flex;align-items:center;justify-content:center;font-weight:800;color:${r.color};flex-shrink:0;font-size:.82rem;">${r.av}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:2px;">
+            <span style="font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</span>
+            ${r.hot?'<span class="hot-flame" style="font-size:.8rem;">🔥</span>':''}
+          </div>
+          <div style="font-size:.7rem;color:#555;">by ${r.host}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:3px;"><div class="live-dot" style="width:5px;height:5px;"></div><span style="font-size:.62rem;color:#ff4040;font-weight:700;">LIVE</span></div>
+          ${r.space?'<span style="font-size:.6rem;color:#4a90d9;">🎙️</span>':''}
+        </div>
+      </div>
+      <div style="font-size:.72rem;color:#777;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🎵 ${r.playing}</div>
+      <!-- Activity mini-stats -->
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <span style="font-size:.68rem;color:#888;">👥 ${r.listeners.toLocaleString()}</span>
+        <span style="font-size:.68rem;color:#888;">🔥 ${r.reactions.toLocaleString()}</span>
+        <span style="font-size:.68rem;color:#888;">🎵 ${r.songs}</span>
+      </div>
+      <!-- Tags -->
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;">${r.tags.slice(0,3).map(t=>`<span style="font-size:.62rem;padding:2px 6px;border-radius:99px;background:#1a1a1a;border:1px solid #2a2a2a;color:#555;">#${t}</span>`).join('')}</div>
+      <!-- CTA -->
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:.65rem;padding:3px 7px;border-radius:99px;border:1px solid;${r.privacy==='public'?'background:rgba(29,185,84,.08);border-color:rgba(29,185,84,.2);color:#1DB954;':r.privacy==='request'?'background:rgba(255,165,0,.08);border-color:rgba(255,165,0,.2);color:#f39c12;':'background:rgba(255,60,60,.08);border-color:rgba(255,60,60,.2);color:#ff4040;'}">${r.privacy==='public'?'🌍 Public':r.privacy==='request'?'🔑 Request to join':'🔒 Private'}</span>
+        <button onclick="event.stopPropagation();joinOrRequest(${r.id})" style="font-size:.72rem;padding:5px 12px;border-radius:8px;font-weight:700;border:none;cursor:pointer;${r.privacy==='public'?'background:linear-gradient(135deg,#1DB954,#1ed760);color:#000;':'background:rgba(255,165,0,.12);border:1px solid rgba(255,165,0,.3);color:#f39c12;'}">${r.privacy==='public'?'Join →':r.privacy==='request'?'Request →':'🔒'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Join / Request ──
+function joinOrRequest(id){
+  const r=ALL_ROOMS.find(x=>x.id===id);if(!r)return;
+  if(r.privacy==='public'){
+    showPage('room');
+    document.getElementById('roomNameEl').textContent=r.name;
+    showToast(`🎵 Joined: ${r.name}`,'success');
+    addChat('system',`You joined ${r.name}`,'');
+  } else if(r.privacy==='request'){
+    openRequestJoin(r);
+  } else {
+    showToast('🔒 This is a private room — invite only','warning');
+  }
+}
+let requestingRoom=null;
+function openRequestJoin(r){
+  requestingRoom=r;
+  document.getElementById('rjIcon').textContent=r.privacy==='request'?'🔑':'🔒';
+  document.getElementById('rjTitle').textContent=`Request to Join "${r.name}"`;
+  document.getElementById('rjDesc').textContent=r.privacy==='request'?`Host @${r.host.slice(1)} must approve your request. You'll be notified via X.`:'This is an invite-only room.';
+  document.getElementById('rjRoomInfo').innerHTML=`<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:9px;background:${r.color}22;border:2px solid ${r.color};display:flex;align-items:center;justify-content:center;font-weight:800;color:${r.color};">${r.av}</div><div><div style="font-weight:700;font-size:.85rem;">${r.name}</div><div style="font-size:.72rem;color:#555;">👥 ${r.listeners.toLocaleString()} listening · 🎵 ${r.playing}</div></div></div>`;
+  document.getElementById('rjNote').value='';
+  document.getElementById('rjSubmitBtn').style.display='block';
+  document.getElementById('rjPendingState').style.display='none';
+  document.getElementById('requestJoinModal').style.display='flex';
+}
+function submitRequest(){
+  if(!requestingRoom)return;
+  document.getElementById('rjSubmitBtn').style.display='none';
+  document.getElementById('rjPendingState').style.display='block';
+  myRequests.unshift({id:requestingRoom.id,name:requestingRoom.name,av:requestingRoom.av,color:requestingRoom.color,time:'Just now',status:'pending'});
+  document.getElementById('pendingBadge').textContent=myRequests.filter(r=>r.status==='pending').length;
+  document.getElementById('pendingBadge').style.display='block';
+  showToast(`🔑 Request sent to ${requestingRoom.host}!`,'notification');
+}
+function simulateApproval(){
+  if(!requestingRoom)return;
+  const req=myRequests.find(r=>r.id===requestingRoom.id);
+  if(req)req.status='approved';
+  closeRequestJoin();
+  showToast(`✅ ${requestingRoom.host} approved your request! You can now join.`,'success');
+  setTimeout(()=>showToast(`🎵 Tap "My Requests" to enter the room`,'info'),1200);
+  const badge=myRequests.filter(r=>r.status==='pending').length;
+  document.getElementById('pendingBadge').textContent=badge||'';
+  document.getElementById('pendingBadge').style.display=badge?'block':'none';
+  document.getElementById('pendingBadge').textContent=badge;
+}
+function closeRequestJoin(){document.getElementById('requestJoinModal').style.display='none';requestingRoom=null;}
+
+// ════════════════════════════════════════
+// CREATE ROOM
+// ════════════════════════════════════════
+let newPrivacy='public';
+function openCreateRoom(){document.getElementById('createRoomModal').style.display='flex';}
+function closeCreateRoom(){document.getElementById('createRoomModal').style.display='none';}
+function selectPrivacy(p,el){
+  newPrivacy=p;
+  document.querySelectorAll('.privacy-opt').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function toggleSwitch(el){
+  switchOn=!switchOn;
+  el.style.background=switchOn?'#1DB954':'#2a2a2a';
+  el.querySelector('div').style.right=switchOn?'3px':'20px';
+}
+function doCreateRoom(){
+  const name=document.getElementById('newRoomName').value.trim();
+  const genre=document.getElementById('newRoomGenre').value;
+  if(!name){showToast('⚠️ Please enter a room name','warning');return;}
+  closeCreateRoom();
+  // Add to rooms
+  const genreEmoji={afrobeats:'🌍',hiphop:'🎤',rnb:'🎹',pop:'✨',lofi:'🍃',jazz:'🎷',electronic:'⚡',latin:'💃'};
+  ALL_ROOMS.unshift({id:Date.now(),name:`${genreEmoji[genre]||'🎵'} ${name}`,host:'@alexmusic',listeners:1,reactions:0,songs:0,peak:1,genre,playing:'Nothing yet — add a song!',av:'A',color:'#1DB954',privacy:newPrivacy,space:switchOn,hot:false,trending:false,tags:[genre,'new'],rank:ALL_ROOMS.length+1,description:'Your new room'});
+  showPage('room');
+  document.getElementById('roomNameEl').textContent=`${genreEmoji[genre]||'🎵'} ${name}`;
+  showToast(`🚀 Room "${name}" is live!`,'success');
+  setTimeout(()=>showToast('👥 Share your invite link to get listeners','info'),1000);
+  if(switchOn)setTimeout(()=>showToast('🎙️ X Space started for your room!','notification'),1800);
+}
+
+// ════════════════════════════════════════
+// ROOM INIT
+// ════════════════════════════════════════
+function initRoom(){
+  renderQueue();renderChat();renderMembersPanel();renderSpaces();renderActivityWave();
+  startProgressTimer();
+}
+function renderActivityWave(){
+  const el=document.getElementById('activityWave');if(!el)return;
+  const heights=[8,12,18,10,24,16,28,20,14,22,18,26,16,30,22];
+  el.innerHTML=heights.map(h=>`<div class="waveform-bar" style="flex:1;height:${h}px;animation-delay:${Math.random()*.5}s;"></div>`).join('');
+}
+function renderSpaces(){
+  const speakers=MEMBERS.filter(m=>m.active&&m.speaking);
+  const sr=document.getElementById('speakersRow');if(!sr)return;
+  sr.innerHTML=speakers.map(m=>`
+    <div style="text-align:center;">
+      <div class="speaker-av ${m.speaking?'speaking':''}" style="width:38px;height:38px;border-radius:50%;background:${m.color}22;border:2px solid ${m.speaking?m.color:'#222'};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:${m.color};margin:0 auto 3px;">${m.av}</div>
+      <div style="font-size:.6rem;color:${m.color};max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.handle}</div>
+      ${m.speaking?`<div style="display:flex;justify-content:center;gap:1px;margin-top:2px;">${[1,2,3].map(()=>`<div class="voice-bar" style="animation:wave .6s ease-in-out infinite alternate;background:#1DB954;width:3px;height:${4+Math.random()*8}px;border-radius:2px;"></div>`).join('')}</div>`:''}
+    </div>`).join('');
+  const lr=document.getElementById('listenersRow2');if(!lr)return;
+  lr.innerHTML=`<span style="font-size:.65rem;color:#444;">Listeners:</span>
+    ${MEMBERS.filter(m=>m.active).slice(0,5).map((m,i)=>`<div style="width:20px;height:20px;border-radius:50%;background:${m.color}33;border:2px solid #060606;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:${m.color};margin-left:${i?'-5px':'0'};">${m.av}</div>`).join('')}
+    <span style="font-size:.65rem;color:#444;margin-left:4px;">+6 more</span>`;
+}
+function toggleMic(btn){const on=btn.textContent.includes('Live');btn.textContent=on?'🔇 Muted':'🎙️ Live';btn.style.color=on?'#ff4040':'#1DB954';btn.style.background=on?'rgba(255,64,64,.1)':'rgba(29,185,84,.1)';btn.style.borderColor=on?'rgba(255,64,64,.3)':'rgba(29,185,84,.3)';showToast(on?'🔇 Mic muted':'🎙️ Mic live!','info');}
+
+// Queue
+function renderQueue(){
+  const c=document.getElementById('queueList');if(!c)return;
+  c.innerHTML=queueData.map((t,i)=>`
+    <div class="queue-item ${t.playing?'playing':''}" style="padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="selectTrack(${i})">
+      <div style="width:28px;height:28px;border-radius:6px;background:${t.color}22;border:1px solid ${t.color}44;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:${t.color};flex-shrink:0;">${t.playing?'▶':i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div>
+        <div style="font-size:.68rem;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.artist} · ${t.addedBy}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+        <button onclick="vote(event,${t.id},1)" style="font-size:.65rem;color:${t.votes>0?'#1DB954':'#333'};background:none;border:none;cursor:pointer;line-height:1;">▲</button>
+        <span style="font-size:.68rem;font-weight:700;color:#555;">${t.votes}</span>
+        <button onclick="vote(event,${t.id},-1)" style="font-size:.65rem;color:#2a2a2a;background:none;border:none;cursor:pointer;line-height:1;">▼</button>
+      </div>
+      <span style="font-size:.65rem;color:#333;">${t.duration}</span>
+    </div>`).join('');
+}
+function selectTrack(i){queueData.forEach((t,j)=>t.playing=j===i);currentIdx=i;const t=queueData[i];document.getElementById('trackNameEl').textContent=t.title;document.getElementById('artistNameEl').textContent=t.artist;progress=0;document.getElementById('progressEl').style.width='0%';renderQueue();showToast(`🎵 Now: ${t.title}`,'song');addChat('system',`▶ Now playing: ${t.title} by ${t.artist}` ,'');}
+function vote(e,id,d){e.stopPropagation();const t=queueData.find(x=>x.id===id);if(t){t.votes+=d;renderQueue();}showToast(d>0?'👍 Voted up!':'👎 Voted down!','info');}
+
+// Player
+function togglePlay(btn){isPlaying=!isPlaying;btn.textContent=isPlaying?'⏸':'▶';document.getElementById('vinylEl').classList.toggle('paused',!isPlaying);if(isPlaying)startProgressTimer();else stopProgressTimer();}
+function startProgressTimer(){stopProgressTimer();pTimer=setInterval(()=>{if(!isPlaying)return;progress=Math.min(progress+.08,100);document.getElementById('progressEl').style.width=progress+'%';const tot=227,cur=Math.floor(tot*progress/100);document.getElementById('curTimeEl').textContent=`${Math.floor(cur/60)}:${String(cur%60).padStart(2,'0')}`;if(progress>=100)nextTrack();},300);}
+function stopProgressTimer(){if(pTimer)clearInterval(pTimer);}
+function nextTrack(){selectTrack((currentIdx+1)%queueData.length);}
+function prevTrack(){selectTrack((currentIdx-1+queueData.length)%queueData.length);}
+function seekFn(e,bar){const r=bar.getBoundingClientRect();progress=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));document.getElementById('progressEl').style.width=progress+'%';}
+function toggleLike(btn){const l=btn.textContent==='❤️';btn.textContent=l?'🤍':'❤️';if(!l)showToast('❤️ Added to Liked Songs on Spotify!','success');}
+
+// Chat
+function renderChat(){const c=document.getElementById('chatMsgs');if(!c)return;c.innerHTML=chatLog.map(m=>{if(m.user==='system')return`<div style="text-align:center;font-size:.68rem;color:#2a2a2a;padding:2px 0;">${m.msg}</div>`;return`<div style="display:flex;gap:6px;animation:fadeIn .3s;"><div style="width:24px;height:24px;border-radius:50%;background:${m.color||'#333'};display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0;">${m.user[1].toUpperCase()}</div><div style="flex:1;"><div style="display:flex;align-items:center;gap:4px;margin-bottom:1px;"><span style="font-size:.68rem;font-weight:700;color:${m.color||'#888'};">${m.user}</span>${m.isHost?'<span style="font-size:.52rem;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;padding:1px 4px;border-radius:99px;font-weight:700;">HOST</span>':''}<span style="font-size:.6rem;color:#2a2a2a;">${m.time||''}</span></div><div style="font-size:.78rem;color:#ccc;line-height:1.4;">${m.msg}</div></div></div>`;}).join('');c.scrollTop=c.scrollHeight;}
+function addChat(user,msg,color,isHost){const now=new Date();chatLog.push({user,msg,color,isHost,time:`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`});renderChat();}
+function sendChat(){const i=document.getElementById('chatInput');const msg=i.value.trim();if(!msg)return;addChat('@alexmusic',msg,'#1DB954',true);i.value='';autoGrow(i);simulateTyping();setTimeout(()=>{const r=['🔥🔥','yes!!','facts','this!!! 🎵','💯💯','lmaooo yes','SAME 😭'];const m=MEMBERS.filter(x=>x.active&&x.handle!=='@alexmusic');const rand=m[Math.floor(Math.random()*m.length)];addChat(rand.handle,r[Math.floor(Math.random()*r.length)],rand.color);},900+Math.random()*1000);}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,64)+'px';}
+function simulateTyping(){const a=document.getElementById('typingEl');const m=MEMBERS.filter(x=>x.active&&x.handle!=='@alexmusic');const r=m[Math.floor(Math.random()*m.length)];a.innerHTML=`<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:.65rem;color:#2a2a2a;">${r.handle} typing</span><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;setTimeout(()=>{a.innerHTML='';},2000);}
+
+// Members
+function renderMembersPanel(){
+  const c=document.getElementById('sp-members');if(!c)return;
+  const active=MEMBERS.filter(m=>m.active),idle=MEMBERS.filter(m=>!m.active);
+  c.innerHTML=`<div style="font-size:.68rem;font-weight:700;color:#333;margin-bottom:8px;">ACTIVE — ${active.length}</div>${active.map(m=>`<div style="display:flex;align-items:center;gap:8px;padding:6px;border-radius:9px;margin-bottom:3px;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='none'"><div style="position:relative;"><div style="width:30px;height:30px;border-radius:50%;background:${m.color}22;border:2px solid ${m.color};display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:${m.color};">${m.av}</div><div style="position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:#1DB954;border:2px solid #060606;"></div></div><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:4px;"><span style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.name}</span>${m.role==='host'?'<span style="font-size:.52rem;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;padding:1px 4px;border-radius:99px;font-weight:700;">HOST</span>':''}${m.speaking?'<span style="font-size:.55rem;color:#1DB954;">🎙️</span>':''}</div><div style="font-size:.65rem;color:#333;">${m.handle}</div></div></div>`).join('')}${idle.length?`<div style="font-size:.68rem;font-weight:700;color:#222;margin:8px 0 5px;">IDLE — ${idle.length}</div>${idle.map(m=>`<div style="display:flex;align-items:center;gap:8px;padding:6px;opacity:.35;"><div style="width:30px;height:30px;border-radius:50%;background:#1a1a1a;border:2px solid #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:#333;">${m.av}</div><div><div style="font-size:.78rem;">${m.name}</div><div style="font-size:.65rem;color:#2a2a2a;">${m.handle} · away</div></div></div>`).join('')}`:''}`;
+}
+
+// Side tabs
+function sideTab(t){['chat','members','stats'].forEach(x=>{document.getElementById('sp-'+x).style.display='none';document.getElementById('st-'+x).classList.remove('active');});document.getElementById('sp-'+t).style.display=t==='chat'?'flex':'block';document.getElementById('st-'+t).classList.add('active');}
+
+// Reactions
+let rxCount=47;
+function rxSend(emoji){rxCount++;document.getElementById('rxCnt').textContent=rxCount;const el=document.createElement('div');el.className='rx-float';el.textContent=emoji;el.style.left=(15+Math.random()*55)+'vw';el.style.bottom='120px';document.body.appendChild(el);setTimeout(()=>el.remove(),2200);addChat('@alexmusic',emoji+' '+emoji,'#1DB954',true);}
+
+// Add Song
+function openAddSong(){document.getElementById('addSongModal').style.display='flex';}
+function closeAddSong(){document.getElementById('addSongModal').style.display='none';document.getElementById('songSearch').value='';document.getElementById('songResults').innerHTML='';}
+function searchSongs(q){const res=q.length<1?[]:SP_SEARCH.filter(s=>s.title.toLowerCase().includes(q.toLowerCase())||s.artist.toLowerCase().includes(q.toLowerCase()));document.getElementById('songResults').innerHTML=res.map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:9px;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background='none'" onclick="addToQueue('${s.title}','${s.artist}','${s.dur}')"><div style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#1DB954,#0a5a1e);display:flex;align-items:center;justify-content:center;flex-shrink:0;">🎵</div><div style="flex:1;min-width:0;"><div style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.title}</div><div style="font-size:.7rem;color:#555;">${s.artist}</div></div><span style="font-size:.68rem;color:#444;">${s.dur}</span><button style="font-size:.7rem;padding:3px 9px;border-radius:7px;background:#1DB954;color:#000;font-weight:700;cursor:pointer;border:none;">+</button></div>`).join('')||(q?'<div style="text-align:center;color:#333;padding:18px;font-size:.8rem;">No results</div>':'');}
+function addToQueue(t,a,d){queueData.push({id:Date.now(),title:t,artist:a,duration:d,votes:0,addedBy:'@alexmusic',playing:false,color:'#1DB954'});closeAddSong();renderQueue();showToast(`✅ "${t}" added!`,'success');addChat('@alexmusic',`🎵 Added "${t}" to queue`,'#1DB954',true);setTimeout(()=>showToast('👍 @jazzlover99 voted up your song!','notification'),1800);}
+
+// Invite
+function openInvite(){document.getElementById('inviteModal').style.display='flex';document.getElementById('inviteList').innerHTML=FOLLOWERS.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:7px;border-radius:9px;margin-bottom:3px;"><div style="width:30px;height:30px;border-radius:50%;background:${f.color}22;border:2px solid ${f.color};display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:${f.color};">${f.name[0]}</div><div style="flex:1;"><div style="font-size:.8rem;font-weight:600;">${f.name}</div><div style="font-size:.68rem;color:#444;">${f.handle}</div></div><button onclick="toggleInv(${i},this)" style="font-size:.68rem;padding:4px 9px;border-radius:7px;background:#1a1a1a;border:1px solid #2a2a2a;color:#555;cursor:pointer;">Invite</button></div>`).join('');}
+function toggleInv(i,btn){FOLLOWERS[i].sent=!FOLLOWERS[i].sent;btn.textContent=FOLLOWERS[i].sent?'✓ Sent':'Invite';btn.style.color=FOLLOWERS[i].sent?'#1DB954':'#555';btn.style.borderColor=FOLLOWERS[i].sent?'rgba(29,185,84,.3)':'#2a2a2a';}
+function closeInvite(){document.getElementById('inviteModal').style.display='none';}
+
+// Toast
+function showToast(msg,type='info'){const w=document.getElementById('toastWrap');const colors={success:'#1DB954',warning:'#f39c12',info:'#4a90d9',song:'#9b59b6',notification:'#e74c3c'};const icons={success:'✅',warning:'⚠️',info:'ℹ️',song:'🎵',notification:'🔔'};const el=document.createElement('div');el.className='toast-item';el.style.cssText=`background:#111;border:1px solid ${colors[type]||'#2a2a2a'};border-left:3px solid ${colors[type]||'#1DB954'};border-radius:12px;padding:9px 12px;display:flex;align-items:flex-start;gap:7px;box-shadow:0 8px 28px rgba(0,0,0,.7);`;el.innerHTML=`<span style="font-size:.85rem;flex-shrink:0;">${icons[type]||'ℹ️'}</span><span style="font-size:.77rem;color:#ccc;line-height:1.4;flex:1;">${msg}</span><button onclick="this.parentElement.remove()" style="color:#2a2a2a;flex-shrink:0;background:none;border:none;cursor:pointer;font-size:.8rem;margin-left:4px;">✕</button>`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},4500);}
+
+// Auto-simulation
+const autoMsgs=['this beat hits 🔥','someone add more WizKid 🙏',"never leaving this room",'the sync is so smooth 😮','🙌🙌🙌','best room on X tonight','who added that last track?? 👏'];
+const autoNotifs=[{msg:'🔔 @beatmaster joined the room',t:'notification'},{msg:'🎵 @soulvibes added "Golden" to queue',t:'song'},{msg:'👍 @jazzlover99 voted up your song',t:'info'},{msg:'🔥 New record: 250 listeners in the room!',t:'success'},{msg:'🔔 @melodymaven is now listening',t:'notification'}];
+let nIdx=0;
+setInterval(()=>{const rm=document.getElementById('page-room');if(!rm||!rm.classList.contains('active'))return;const m=MEMBERS.filter(x=>x.active&&x.handle!=='@alexmusic');const r=m[Math.floor(Math.random()*m.length)];addChat(r.handle,autoMsgs[Math.floor(Math.random()*autoMsgs.length)],r.color);},7500+Math.random()*4000);
+setInterval(()=>{if(Math.random()<.35){const n=autoNotifs[nIdx%autoNotifs.length];showToast(n.msg,n.t);nIdx++;}},10000);
+setInterval(()=>{const el=document.getElementById('listenerCnt');if(!el)return;el.textContent=Math.max(8,Math.min(20,parseInt(el.textContent)+(Math.random()>.5?1:-1)));},5000);
+setInterval(()=>{const el=document.getElementById('liveRoomCount');const el2=document.getElementById('liveUserCount');if(el)el.textContent=(247+Math.floor(Math.random()*10)-5).toLocaleString();if(el2)el2.textContent=(18432+Math.floor(Math.random()*100)-50).toLocaleString();},4000);
+
+// Boot
+window.addEventListener('DOMContentLoaded',()=>{
+  showPage('landing');
+  setTimeout(()=>showToast('👋 Welcome to SoundRoom v3! Click 🧭 Tour for a guide.','info'),800);
+  setTimeout(()=>showToast('🌍 247 rooms live right now — check Global tab!','notification'),2500);
+});
+</script>
+</body>
+</html>
