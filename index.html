@@ -1226,7 +1226,6 @@ function renderMembersPanel(){
 function sideTab(t){['chat','members','stats'].forEach(x=>{document.getElementById('sp-'+x).style.display='none';document.getElementById('st-'+x).classList.remove('active');});document.getElementById('sp-'+t).style.display=t==='chat'?'flex':'block';document.getElementById('st-'+t).classList.add('active');}
 
 // Reactions
-let rxCount=47;
 function rxSend(emoji){rxCount++;document.getElementById('rxCnt').textContent=rxCount;const el=document.createElement('div');el.className='rx-float';el.textContent=emoji;el.style.left=(15+Math.random()*55)+'vw';el.style.bottom='120px';document.body.appendChild(el);setTimeout(()=>el.remove(),2200);addChat('@alexmusic',emoji+' '+emoji,'#1DB954',true);}
 
 // Add Song
