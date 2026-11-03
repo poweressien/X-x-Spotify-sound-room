@@ -288,6 +288,23 @@ input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
 .band { padding-block: clamp(36px, 6vw, 72px); border-top: 1px solid var(--line-soft); }
 
 /* ---------- Overview ---------- */
+#page-overview { position: relative; }
+.bg-float {
+  position: absolute; inset: 0 0 auto 0; height: min(980px, 130vh); overflow: hidden; pointer-events: none; z-index: 0;
+  background: linear-gradient(180deg, #0c1a0c 0%, rgb(12 26 12 / 0.55) 45%, transparent 100%);
+}
+.bf { position: absolute; fill: currentColor; animation: floatNote 7s ease-in-out infinite; }
+.bf-x { width: clamp(54px, 7vw, 96px); left: 5%; top: 9%; color: #fff; opacity: 0.08; }
+.bf-sp { width: clamp(64px, 9vw, 124px); right: 4%; top: 6%; color: #1DB954; opacity: 0.14; animation-duration: 8.5s; animation-delay: 1s; }
+.bf-x2 { width: clamp(40px, 5vw, 70px); right: 36%; top: 62%; color: #fff; opacity: 0.06; animation-duration: 9s; animation-delay: 2s; }
+.bf-sp2 { width: clamp(44px, 5.5vw, 78px); left: 3%; top: 70%; color: #1DB954; opacity: 0.1; animation-duration: 7.5s; animation-delay: 3s; }
+.note { color: #1DB954; line-height: 1; font-family: "Segoe UI Symbol", "Apple Symbols", system-ui, sans-serif; }
+.n1 { font-size: clamp(3rem, 7vw, 5.5rem); left: 20%; top: 52%; opacity: 0.1; }
+.n2 { font-size: clamp(2.2rem, 5vw, 3.8rem); left: 44%; top: 5%; opacity: 0.09; animation-duration: 9s; animation-delay: 1.5s; }
+.n3 { font-size: clamp(2.6rem, 6vw, 4.6rem); right: 12%; top: 48%; opacity: 0.1; animation-duration: 8s; animation-delay: 2.5s; }
+.n4 { font-size: clamp(2rem, 4vw, 3rem); right: 28%; top: 14%; opacity: 0.08; animation-delay: 4s; }
+.n5 { font-size: clamp(2.4rem, 5vw, 4rem); left: 9%; top: 36%; opacity: 0.08; animation-duration: 10s; animation-delay: 0.5s; }
+.hero, #page-overview .band { position: relative; z-index: 1; }
 .hero {
   overflow-x: clip;
   display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
@@ -738,6 +755,7 @@ td.warn { color: var(--amber); font-weight: 600; }
 .foot p { max-width: 72ch; }
 
 /* ---------- Motion ---------- */
+@keyframes floatNote { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-18px) rotate(5deg); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 @keyframes ring { from { transform: scale(1); opacity: 0.6; } to { transform: scale(2.5); opacity: 0; } }
