@@ -54,7 +54,7 @@
     const pa = hexRgb(a), pb = hexRgb(b);
     return '#' + pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, '0')).join('');
   };
-  const BG = '#15101C';
+  const BG = '#090909';
   function cover(color, seed, cls) {
     return h('span', { class: 'cover' + (cls ? ' ' + cls : ''), vars: { '--c1': color, '--c2': mix(color, BG, 0.6), '--rot': (seed * 47) % 180 + 90 } });
   }
@@ -68,7 +68,7 @@
   /* ------------------------------------------------------------------ */
   /* Data (all invented)                                                */
   /* ------------------------------------------------------------------ */
-  const ME = { handle: '@alexmusic', name: 'Alex M.', av: 'A', color: '#FFC247' };
+  const ME = { handle: '@alexmusic', name: 'Alex M.', av: 'A', color: '#1DB954' };
   const GENRES = {
     afrobeats: { label: 'Afrobeats', color: '#FF8F3F' },
     hiphop: { label: 'Hip-hop', color: '#F25F5C' },
@@ -82,7 +82,7 @@
   const PALETTE = Object.values(GENRES).map((g) => g.color);
 
   const MEMBERS = [
-    { handle: '@alexmusic', name: 'Alex M.', av: 'A', color: '#FFC247', active: true },
+    { handle: '@alexmusic', name: 'Alex M.', av: 'A', color: '#1DB954', active: true },
     { handle: '@jazzlover99', name: 'Jazz', av: 'J', color: '#8DBBFF', active: true },
     { handle: '@beatmaster', name: 'Beat M.', av: 'B', color: '#FF8A8A', active: true },
     { handle: '@soulvibes', name: 'Soul V.', av: 'S', color: '#F59E6B', active: true },
@@ -612,7 +612,7 @@
     const seek = $('#seek');
     seek.max = String(t ? parseDur(t.dur) : 100);
     seek.disabled = !t;
-    $('#vinyl').style.setProperty('--c1', t ? t.color : '#ffc247');
+    $('#vinyl').style.setProperty('--c1', t ? t.color : '#1DB954');
     $('#vinyl').classList.toggle('paused', !state.playing);
     $('#eq').classList.toggle('paused', !state.playing);
     const pb = $('#playBtn');
@@ -798,7 +798,7 @@
   function chatNode(m) {
     if (m.sys) return h('p', { class: 'sys' }, m.msg);
     const mem = memberOf(m.user) || (m.user === ME.handle ? ME : null);
-    const color = mem ? mem.color : '#a397b4';
+    const color = mem ? mem.color : '#8c8c8c';
     return h('div', { class: 'msg' },
       h('span', { class: 'av', vars: { '--c': color, '--s': '28px' }, 'aria-hidden': 'true' }, m.user.charAt(1).toUpperCase()),
       h('div', null,
